@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import org.kde.plasma.plasmoid
 
-// Favorite or recent apps, depending on the "Pinned applications Page" setting
+// Favorite apps, recent apps or recent files, depending on the "Main page" setting
 LauncherPage {
     id: pinnedApps
 
@@ -22,7 +22,7 @@ LauncherPage {
                 return;
             }
             const source = pinnedApps.launcher.dragSource.sourceItem as FavoriteItem;
-            if (source === null || source.grid !== pinnedAppsGrid) {
+            if (source === null || source.grid !== pinnedAppsGrid || Plasmoid.configuration.pinnedModel !== 0) {
                 return;
             }
             const pos = dropArea.mapToItem(pinnedAppsGrid.contentItem, drag.x, drag.y);
@@ -42,7 +42,13 @@ LauncherPage {
             searchField: pinnedApps.searchField
             showScrollBar: false
 
-            model: Plasmoid.configuration.pinnedModel === 0 ? pinnedApps.launcher.globalFavorites : pinnedApps.launcher.rootModel.modelForRow(0)
+            model: {
+                switch (Plasmoid.configuration.pinnedModel) {
+                case 1: return pinnedApps.launcher.rootModel.modelForRow(0); // Recent apps
+                case 2: return pinnedApps.launcher.rootModel.modelForRow(1); // Recent files
+                default: return pinnedApps.launcher.globalFavorites;
+                }
+            }
         }
     }
 }

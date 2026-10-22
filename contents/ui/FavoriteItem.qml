@@ -66,6 +66,7 @@ Item {
             dragSource.Drag.active = false;
             dragSource.Drag.imageSource = "";
             dragSource.sourceItem = null;
+            dragSource.favoriteId = "";
             return;
         }
         appicon.grabToImage(result => {
@@ -73,6 +74,7 @@ Item {
                 return;
             }
             dragSource.sourceItem = favItem;
+            dragSource.favoriteId = favItem.model.favoriteId ?? "";
             dragSource.Drag.imageSource = result.url;
             dragSource.Drag.mimeData = {
                 "text/uri-list": [favItem.url]
@@ -93,6 +95,12 @@ Item {
         width: favItem.launcher.iconSize
         height: appicon.width
         source: favItem.model.decoration
+
+        NewAppBadge {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            visible: favItem.model.isNewlyInstalled === true
+        }
     }
 
     PlasmaComponents.Label {

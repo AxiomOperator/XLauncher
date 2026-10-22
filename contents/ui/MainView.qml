@@ -56,26 +56,44 @@ Item {
                                           + main.launcher.cellSizeHeight * main.launcher.rows
 
     readonly property LauncherPage currentPage: stack.currentItem as LauncherPage
+    readonly property AllAppsList allAppsPage: stack.currentItem as AllAppsList
+
+    // Title and icon of the main page, which shows favorites, recent apps or recent files
+    readonly property string pinnedTitle: {
+        switch (main.pinnedModel) {
+        case 1: return i18n("Recent Apps");
+        case 2: return i18n("Recent Files");
+        default: return i18n("Favorite Apps");
+        }
+    }
+    readonly property var pinnedIcon: {
+        switch (main.pinnedModel) {
+        case 1: return "document-open-recent-symbolic";
+        case 2: return Qt.resolvedUrl("icons/feather/file-text.svg");
+        default: return Qt.resolvedUrl("icons/feather/star.svg");
+        }
+    }
+
+    // Whether the current drag is an app that can be added to favorites
+    readonly property bool dragCanBeFavorited: {
+        const id = main.launcher.dragSource.favoriteId;
+        return id !== "" && main.launcher.globalFavorites !== null && !main.launcher.globalFavorites.isFavorite(id);
+    }
 
     function reset(): void {
         main.showAllApps = false;
         searchBar.textField.clear();
         searchBar.textField.forceActiveFocus();
         stack.replace(pinnedAppsComponent);
-        headerLabelRow.reset();
     }
-
-    onPinnedModelChanged: headerLabelRow.reset()
 
     onSearchingChanged: {
         if (main.searching) {
             stack.replace(searchComponent);
         } else if (main.showAllApps) {
             stack.replace(allAppsComponent);
-            headerLabelRow.reset();
         } else {
             stack.replace(pinnedAppsComponent);
-            headerLabelRow.reset();
         }
     }
 
@@ -154,27 +172,10 @@ Item {
 
             visible: !main.searching
 
-            function reset(): void {
-                if (main.showAllApps) {
-                    const appList = stack.currentItem as AllAppsList;
-                    const currentCategory = appList ? appList.getCurrentCategory() : undefined;
-                    if (!currentCategory) {
-                        return;
-                    }
-                    mainLabelGrid.text = currentCategory.name;
-                    sortingImage.source = currentCategory.icon;
-                    appList.updateShowedModel(currentCategory.index);
-                } else {
-                    mainLabelGrid.text = main.pinnedModel === 0 ? i18n("Favorite Apps") : i18n("Recent Apps");
-                }
-            }
-
-            Component.onCompleted: headerLabelRow.reset()
-
             Kirigami.Icon {
                 id: headerLabel
 
-                source: Qt.resolvedUrl("icons/feather/star.svg")
+                source: main.pinnedIcon
                 visible: !main.showAllApps
                 isMask: true
                 color: Kirigami.Theme.textColor
@@ -187,6 +188,7 @@ Item {
             Kirigami.Icon {
                 id: sortingImage
 
+                source: main.allAppsPage && main.allAppsPage.currentCategory ? main.allAppsPage.currentCategory.icon : ""
                 visible: main.showAllApps
 
                 Layout.preferredHeight: 15
@@ -197,22 +199,27 @@ Item {
             PlasmaComponents.Label {
                 id: mainLabelGrid
 
+                text: {
+                    if (!main.showAllApps) {
+                        return main.pinnedTitle;
+                    }
+                    return main.allAppsPage && main.allAppsPage.currentCategory ? main.allAppsPage.currentCategory.name : "";
+                }
                 font.family: main.launcher.textFont
                 font.pointSize: main.launcher.textSize
 
-                Layout.fillWidth: true
-
-                // Cycles through the app categories
+                // In All Apps: cycles through the categories. Otherwise: picks what the main page shows.
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
-                    enabled: main.showAllApps && !main.searching
+                    enabled: !main.searching
                     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
                     onClicked: mouse => {
-                        const appList = stack.currentItem as AllAppsList;
-                        if (!appList) {
+                        const appList = main.allAppsPage;
+                        if (!main.showAllApps || !appList) {
+                            pageMenu.popup(mainLabelGrid, 0, mainLabelGrid.height);
                             return;
                         }
                         if (mouse.button === Qt.LeftButton) {
@@ -222,15 +229,61 @@ Item {
                         } else if (mouse.button === Qt.MiddleButton) {
                             appList.resetCurrentStateIndex();
                         }
-                        headerLabelRow.reset();
                     }
+                }
+            }
+
+            Kirigami.Icon {
+                source: "arrow-down-symbolic"
+                visible: !main.showAllApps
+                isMask: true
+                color: Kirigami.Theme.textColor
+                opacity: 0.7
+
+                Layout.preferredHeight: 12
+                Layout.preferredWidth: 12
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            PlasmaComponents.Menu {
+                id: pageMenu
+
+                component PageMenuItem: PlasmaComponents.MenuItem {
+                    id: pageMenuItem
+
+                    required property int page
+
+                    checkable: true
+                    checked: main.pinnedModel === pageMenuItem.page
+                    onTriggered: Plasmoid.configuration.pinnedModel = pageMenuItem.page
+                }
+
+                PageMenuItem {
+                    page: 0
+                    text: i18n("Favorite Apps")
+                }
+                PageMenuItem {
+                    page: 1
+                    text: i18n("Recent Apps")
+                }
+                PageMenuItem {
+                    page: 2
+                    text: i18n("Recent Files")
                 }
             }
 
             PlasmaComponents.Button {
                 id: allAppsButton
 
-                text: main.showAllApps ? i18n("Back") : i18n("All apps")
+                text: {
+                    if (favoriteDropArea.containsDrag && main.dragCanBeFavorited) {
+                        return i18n("Add to Favorites");
+                    }
+                    return main.showAllApps ? i18n("Back") : i18n("All apps");
+                }
                 flat: false
 
                 topPadding: 6
@@ -251,7 +304,6 @@ Item {
                 onClicked: {
                     main.showAllApps = !main.showAllApps;
                     stack.replace(main.showAllApps ? allAppsComponent : pinnedAppsComponent);
-                    headerLabelRow.reset();
                     searchBar.textField.forceActiveFocus(Qt.BacktabFocusReason);
                 }
 
@@ -286,6 +338,36 @@ Item {
                         shadowColor: main.launcher.glowColor1
                         shadowBlur: 0.7
                         blurMax: 16
+                    }
+
+                    // Shown while an app is dragged over the button
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: height / 2
+                        color: "transparent"
+                        border.width: 2
+                        border.color: Kirigami.Theme.highlightColor
+                        visible: favoriteDropArea.containsDrag && main.dragCanBeFavorited
+                    }
+                }
+
+                // In All Apps, dropping an app on the Back button adds it to favorites
+                DropArea {
+                    id: favoriteDropArea
+
+                    anchors.fill: parent
+                    enabled: main.showAllApps
+
+                    onEntered: drag => {
+                        if (drag.source !== main.launcher.dragSource || !main.dragCanBeFavorited) {
+                            drag.accepted = false;
+                        }
+                    }
+                    onDropped: drop => {
+                        if (drop.source === main.launcher.dragSource && main.dragCanBeFavorited) {
+                            main.launcher.globalFavorites.addFavorite(main.launcher.dragSource.favoriteId);
+                            drop.accept(Qt.CopyAction);
+                        }
                     }
                 }
             }

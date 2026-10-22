@@ -20,6 +20,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
+import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
 
 LauncherPage {
@@ -43,8 +47,18 @@ LauncherPage {
 
     property int currentStateIndex: allApps.defaultStateIndex()
 
+    // The selected category; falls back to the first one if the index is out of range
+    readonly property var currentCategory: {
+        const list = allApps.appsCategoriesList;
+        if (list.length === 0) {
+            return undefined;
+        }
+        const index = allApps.currentStateIndex;
+        return list[index >= 0 && index < list.length ? index : 0];
+    }
+
     // The model shown by the current view
-    property var shownModel: allApps.launcher.rootModel.modelForRow(2)
+    readonly property var shownModel: allApps.launcher.rootModel.modelForRow(allApps.currentCategory ? allApps.currentCategory.index : 2)
 
     readonly property bool showItemsInGrid: Plasmoid.configuration.showItemsInGrid
 
@@ -54,33 +68,17 @@ LauncherPage {
         return (page >= 0 && page < allApps.appsCategoriesList.length) ? page : 0;
     }
 
-    function updateShowedModel(index: int): void {
-        allApps.shownModel = allApps.launcher.rootModel.modelForRow(index);
-    }
-
     function incrementCurrentStateIndex(): void {
-        allApps.currentStateIndex += 1;
-        if (allApps.currentStateIndex > allApps.appsCategoriesList.length - 1) {
-            allApps.currentStateIndex = 0;
-        }
+        allApps.currentStateIndex = (allApps.currentStateIndex + 1) % Math.max(allApps.appsCategoriesList.length, 1);
     }
 
     function decrementCurrentStateIndex(): void {
-        allApps.currentStateIndex -= 1;
-        if (allApps.currentStateIndex < 0) {
-            allApps.currentStateIndex = allApps.appsCategoriesList.length - 1;
-        }
+        const count = Math.max(allApps.appsCategoriesList.length, 1);
+        allApps.currentStateIndex = (allApps.currentStateIndex - 1 + count) % count;
     }
 
     function resetCurrentStateIndex(): void {
         allApps.currentStateIndex = allApps.defaultStateIndex();
-    }
-
-    function getCurrentCategory(): var {
-        if (allApps.currentStateIndex < 0 || allApps.currentStateIndex >= allApps.appsCategoriesList.length) {
-            allApps.currentStateIndex = allApps.defaultStateIndex();
-        }
-        return allApps.appsCategoriesList[allApps.currentStateIndex];
     }
 
     viewItem: appViewLoader.item as Item
@@ -93,11 +91,61 @@ LauncherPage {
         }
     }
 
-    Loader {
-        id: appViewLoader
-
+    ColumnLayout {
         anchors.fill: parent
-        sourceComponent: allApps.showItemsInGrid ? applicationsGridViewComponent : applicationsListViewComponent
+        spacing: Kirigami.Units.smallSpacing
+
+        // One chip per category
+        ListView {
+            id: categoryBar
+
+            orientation: ListView.Horizontal
+            spacing: Kirigami.Units.smallSpacing
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            model: allApps.appsCategoriesList
+            currentIndex: allApps.currentStateIndex
+            highlightFollowsCurrentItem: false
+            implicitHeight: Kirigami.Units.gridUnit * 1.75
+
+            Layout.fillWidth: true
+
+            onCurrentIndexChanged: categoryBar.positionViewAtIndex(categoryBar.currentIndex, ListView.Contain)
+
+            delegate: PlasmaComponents.ToolButton {
+                id: chip
+
+                required property var modelData
+                required property int index
+
+                height: categoryBar.height
+                text: chip.modelData.name
+                checkable: true
+                checked: chip.index === allApps.currentStateIndex
+                focusPolicy: Qt.NoFocus
+                font.family: allApps.launcher.textFont
+                font.pointSize: allApps.launcher.textSize * 0.9
+
+                onClicked: allApps.currentStateIndex = chip.index
+            }
+
+            // Lets a plain mouse wheel scroll the chips sideways
+            WheelHandler {
+                acceptedDevices: PointerDevice.Mouse
+                onWheel: event => {
+                    categoryBar.flick(event.angleDelta.y * 8, 0);
+                }
+            }
+        }
+
+        Loader {
+            id: appViewLoader
+
+            sourceComponent: allApps.showItemsInGrid ? applicationsGridViewComponent : applicationsListViewComponent
+
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
     }
 
     Component {

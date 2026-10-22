@@ -32,4 +32,9 @@ ConfigModel {
         icon: "view-list-details"
         source: "config/ListAndGrid.qml"
     }
+    ConfigCategory {
+        name: i18n("Search")
+        icon: "search"
+        source: "config/ConfigSearch.qml"
+    }
 }

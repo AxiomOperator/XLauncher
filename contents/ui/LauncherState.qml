@@ -61,10 +61,14 @@ Item {
     // Text and glow settings
     readonly property string textFont: Plasmoid.configuration.useSystemFontSettings ? Kirigami.Theme.defaultFont.family : "SF Pro Text"
     readonly property real textSize: Plasmoid.configuration.useSystemFontSettings ? Kirigami.Theme.defaultFont.pointSize : 11
+    // Whether the custom glow color is selected instead of a preset
+    readonly property bool customGlow: Plasmoid.configuration.glowColor === 3
+    readonly property color customGlowColor: Plasmoid.configuration.customGlowColor
     readonly property color glowColor1: {
         switch (Plasmoid.configuration.glowColor) {
         case 0: return "#D300DC";
         case 1: return "#20bdff";
+        case 3: return launcher.customGlowColor;
         default: return "#ff005d";
         }
     }
@@ -72,6 +76,7 @@ Item {
         switch (Plasmoid.configuration.glowColor) {
         case 0: return "#8700FF";
         case 1: return "#5433ff";
+        case 3: return Qt.darker(launcher.customGlowColor, 1.6);
         default: return "#ff8b26";
         }
     }
@@ -81,6 +86,8 @@ Item {
 
     component DragSource: Item {
         property Item sourceItem
+        // Favorite id of the dragged app, empty for items that can't be favorites
+        property string favoriteId
         Drag.dragType: Drag.Automatic
     }
 
@@ -111,7 +118,7 @@ Item {
 
         autoPopulate: false
 
-        appNameFormat: 0
+        appNameFormat: Plasmoid.configuration.appNameFormat
         flat: true
         sorted: true
         showSeparators: false
@@ -123,6 +130,7 @@ Item {
         showRecentApps: true
         showRecentDocs: true
         showPowerSession: false
+        highlightNewlyInstalledApps: Plasmoid.configuration.highlightNewlyInstalledApps
 
         // Favorites are persisted by KActivities stats, keyed by this client id
         Component.onCompleted: rootModelObject.favoritesModel.initForClient("org.kde.plasma.kicker.favorites.instance-" + Plasmoid.id)
@@ -139,6 +147,8 @@ Item {
         favoritesModel: launcher.globalFavorites
         appletInterface: launcher.plasmoidItem
         mergeResults: true
+        // An empty list searches with every plugin enabled in System Settings
+        runners: Plasmoid.configuration.useExtraRunners ? Plasmoid.configuration.extraRunners : []
     }
 
     Kicker.ProcessRunner {

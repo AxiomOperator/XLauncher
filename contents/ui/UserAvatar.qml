@@ -13,6 +13,7 @@ Item {
         switch (Plasmoid.configuration.glowColor) {
         case 0: return "#FEAC5E";
         case 1: return "#a5fecb";
+        case 3: return Qt.lighter(avatar.launcher.customGlowColor, 1.4);
         default: return "#ff005d";
         }
     }
@@ -20,6 +21,7 @@ Item {
         switch (Plasmoid.configuration.glowColor) {
         case 0: return "#C779D0";
         case 1: return "#20bdff";
+        case 3: return avatar.launcher.customGlowColor;
         default: return "#ff005c";
         }
     }
@@ -27,6 +29,7 @@ Item {
         switch (Plasmoid.configuration.glowColor) {
         case 0: return "#4BC0C8";
         case 1: return "#5433ff";
+        case 3: return Qt.darker(avatar.launcher.customGlowColor, 1.6);
         default: return "#ff8b26";
         }
     }

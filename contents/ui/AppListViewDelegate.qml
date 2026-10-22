@@ -67,6 +67,7 @@ T.ItemDelegate {
             dragSource.Drag.active = false;
             dragSource.Drag.imageSource = "";
             dragSource.sourceItem = null;
+            dragSource.favoriteId = "";
             return;
         }
         appIcon.grabToImage(result => {
@@ -74,6 +75,7 @@ T.ItemDelegate {
                 return;
             }
             dragSource.sourceItem = allItem;
+            dragSource.favoriteId = allItem.model.favoriteId ?? "";
             dragSource.Drag.imageSource = result.url;
             dragSource.Drag.mimeData = {
                 "text/uri-list": [allItem.model.url]
@@ -104,6 +106,12 @@ T.ItemDelegate {
             source: allItem.model.decoration
 
             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+
+            NewAppBadge {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                visible: allItem.model.isNewlyInstalled === true
+            }
         }
 
         GridLayout {

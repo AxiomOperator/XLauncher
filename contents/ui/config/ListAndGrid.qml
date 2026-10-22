@@ -11,6 +11,8 @@ KCM.SimpleKCM {
     property alias cfg_appsIconSize: appsIconSize.currentIndex
     property alias cfg_numberColumns: numberColumns.value
     property alias cfg_numberOfRows: numberOfRows.value
+    property alias cfg_appNameFormat: appNameFormat.currentIndex
+    property alias cfg_highlightNewlyInstalledApps: highlightNewlyInstalledApps.checked
 
     Kirigami.FormLayout {
         CheckBox {
@@ -25,6 +27,24 @@ KCM.SimpleKCM {
 
             Kirigami.FormData.label: i18n("All applications view:")
             text: i18n("show items in grid")
+        }
+
+        ComboBox {
+            id: appNameFormat
+
+            Kirigami.FormData.label: i18n("Show apps as:")
+            model: [
+                i18n("Name only"),
+                i18n("Description only"),
+                i18n("Name (Description)"),
+                i18n("Description (Name)"),
+            ]
+        }
+
+        CheckBox {
+            id: highlightNewlyInstalledApps
+
+            text: i18n("Mark newly installed apps")
         }
 
         ComboBox {

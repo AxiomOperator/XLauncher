@@ -19,6 +19,8 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
  ****************************************************************************/
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -50,6 +52,20 @@ KCM.SimpleKCM {
 
     property alias cfg_enableGlow: enableGlowCheck.checked
     property alias cfg_glowColor: glowColor.currentIndex
+    property color cfg_customGlowColor: Plasmoid.configuration.customGlowColor
+    property var cfg_systemFavorites: []
+
+    // System actions that can be shown as buttons next to the power menu
+    readonly property var systemActions: [
+        { id: "lock-screen", text: i18n("Lock") },
+        { id: "switch-user", text: i18n("Switch User") },
+        { id: "logout", text: i18n("Log Out") },
+        { id: "suspend", text: i18n("Sleep") },
+        { id: "hibernate", text: i18n("Hibernate") },
+        { id: "reboot", text: i18n("Restart") },
+        { id: "shutdown", text: i18n("Shut Down") },
+        { id: "save-session", text: i18n("Save Session") },
+    ]
 
     property alias cfg_useSystemFontSettings: useSystemFontSettings.checked
 
@@ -225,7 +241,33 @@ KCM.SimpleKCM {
                 i18n("Purple (Default)"),
                 i18n("Blue"),
                 i18n("Red"),
+                i18n("Custom"),
             ]
+        }
+
+        Button {
+            id: customGlowButton
+
+            Kirigami.FormData.label: i18n("Custom glow color:")
+            visible: enableGlowCheck.checked && glowColor.currentIndex === 3
+            width: Kirigami.Units.iconSizes.small
+            height: customGlowButton.width
+
+            onPressed: customGlowDialog.visible ? customGlowDialog.close() : customGlowDialog.open()
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 10
+                color: configGeneral.cfg_customGlowColor
+            }
+
+            ColorDialog {
+                id: customGlowDialog
+
+                title: i18n("Please choose a color")
+                selectedColor: configGeneral.cfg_customGlowColor
+                onAccepted: configGeneral.cfg_customGlowColor = customGlowDialog.selectedColor
+            }
         }
 
         Item {
@@ -290,10 +332,11 @@ KCM.SimpleKCM {
         ComboBox {
             id: pinnedModel
 
-            Kirigami.FormData.label: i18n("Pinned applications Page:")
+            Kirigami.FormData.label: i18n("Main page:")
             model: [
                 i18n("Favorites (Default)"),
-                i18n("Recent Applications")
+                i18n("Recent Applications"),
+                i18n("Recent Files")
             ]
         }
 
@@ -322,6 +365,33 @@ KCM.SimpleKCM {
             model: Plasmoid.configuration.categoryNames.length > 0 ? Plasmoid.configuration.categoryNames : defaultPage.fallbackNames
             currentIndex: Math.min(configGeneral.cfg_defaultPage, defaultPage.count - 1)
             onActivated: index => configGeneral.cfg_defaultPage = index
+        }
+
+        Item {
+            Kirigami.FormData.isSection: true
+        }
+
+        Repeater {
+            model: configGeneral.systemActions
+
+            delegate: CheckBox {
+                id: actionCheck
+
+                required property var modelData
+                required property int index
+
+                Kirigami.FormData.label: actionCheck.index === 0 ? i18n("Power buttons:") : ""
+                text: actionCheck.modelData.text
+                checked: configGeneral.cfg_systemFavorites.includes(actionCheck.modelData.id)
+
+                onToggled: {
+                    // Keep the menu order, regardless of the order they were checked in
+                    const pinned = configGeneral.cfg_systemFavorites;
+                    configGeneral.cfg_systemFavorites = configGeneral.systemActions
+                        .map(action => action.id)
+                        .filter(id => id === actionCheck.modelData.id ? actionCheck.checked : pinned.includes(id));
+                }
+            }
         }
 
         Item {

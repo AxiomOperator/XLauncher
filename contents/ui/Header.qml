@@ -20,85 +20,126 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import org.kde.kcmutils as KCM
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PC3
 import org.kde.plasma.extras as PlasmaExtras
+import org.kde.plasma.plasmoid
 import org.kde.plasma.private.kicker as Kicker
 
+// Settings, pinned system actions and the leave menu
 Item {
     id: header
 
     required property LauncherState launcher
     required property real iconSize
 
-    width: header.iconSize * 3.55
+    // Favorite ids of the system actions shown as buttons (lock-screen, suspend, ...)
+    readonly property list<string> pinnedActions: Plasmoid.configuration.systemFavorites
+
+    implicitWidth: buttonRow.implicitWidth
+    implicitHeight: buttonRow.implicitHeight
+    width: header.implicitWidth
     height: header.iconSize
 
-    // System actions (lock, log out, restart, ...) for the leave menu
+    component HeaderButton: PC3.RoundButton {
+        id: headerButton
+
+        property var iconSource
+        // Tint the icon with the text color (for the bundled monochrome icons)
+        property bool maskIcon: false
+
+        flat: true
+
+        Layout.preferredHeight: header.iconSize * 1.5
+        Layout.preferredWidth: header.iconSize * 1.5
+
+        PC3.ToolTip.text: headerButton.Accessible.name
+        PC3.ToolTip.visible: headerButton.hovered && headerButton.Accessible.name !== ""
+        PC3.ToolTip.delay: Kirigami.Units.toolTipDelay
+
+        Kirigami.Icon {
+            anchors.fill: parent
+            anchors.margins: header.iconSize * 0.15
+            source: headerButton.iconSource
+            isMask: headerButton.maskIcon
+            color: Kirigami.Theme.textColor
+        }
+    }
+
+    // System actions (lock, log out, restart, ...)
     Kicker.SystemModel {
         id: systemModel
 
         favoritesModel: header.launcher.systemFavorites
     }
 
-    PC3.RoundButton {
-        id: settingsButton
+    RowLayout {
+        id: buttonRow
 
-        flat: true
-        height: header.iconSize * 1.5
-        width: settingsButton.height
-        anchors.left: parent.left
-
-        onClicked: {
-            KCM.KCMLauncher.openSystemSettings("kcm_landingpage");
-            header.launcher.close();
-        }
-
-        Kirigami.Icon {
-            id: settingsImage
-
-            anchors.fill: parent
-            source: Qt.resolvedUrl("icons/feather/stngs.svg")
-            isMask: true
-            color: Kirigami.Theme.textColor
-        }
-    }
-
-    PC3.RoundButton {
-        id: leaveButton
-
-        Accessible.role: Accessible.ButtonMenu
         anchors.right: parent.right
-        flat: true
-        height: header.iconSize * 1.5
-        width: leaveButton.height
-        // Look pressed while the menu is open
-        down: contextMenu.status === PlasmaExtras.Menu.Open || leaveButton.pressed
+        spacing: 0
 
-        Keys.onLeftPressed: event => {
-            if (Application.layoutDirection === Qt.LeftToRight) {
-                leaveButton.nextItemInFocusChain(false).forceActiveFocus(Qt.BacktabFocusReason);
+        HeaderButton {
+            id: settingsButton
+
+            iconSource: Qt.resolvedUrl("icons/feather/stngs.svg")
+            maskIcon: true
+            Accessible.name: i18n("System Settings")
+
+            onClicked: {
+                KCM.KCMLauncher.openSystemSettings("kcm_landingpage");
+                header.launcher.close();
             }
         }
-        Keys.onRightPressed: event => {
-            if (Application.layoutDirection === Qt.RightToLeft) {
-                leaveButton.nextItemInFocusChain(false).forceActiveFocus(Qt.BacktabFocusReason);
+
+        Repeater {
+            model: systemModel
+
+            delegate: HeaderButton {
+                id: actionButton
+
+                required property int index
+                required property var model
+
+                iconSource: actionButton.model.decoration
+                visible: header.pinnedActions.includes(actionButton.model.favoriteId)
+                Accessible.name: actionButton.model.display
+
+                onClicked: {
+                    header.launcher.close();
+                    systemModel.trigger(actionButton.index, "", null);
+                }
             }
         }
 
-        onPressed: contextMenu.openRelative()
+        HeaderButton {
+            id: leaveButton
 
-        Kirigami.Icon {
-            id: powerImage
+            iconSource: Qt.resolvedUrl("icons/feather/pwr.svg")
+            maskIcon: true
+            Accessible.role: Accessible.ButtonMenu
+            Accessible.name: i18n("Leave")
+            // Look pressed while the menu is open
+            down: contextMenu.status === PlasmaExtras.Menu.Open || leaveButton.pressed
 
-            anchors.fill: parent
-            source: Qt.resolvedUrl("icons/feather/pwr.svg")
-            isMask: true
-            color: Kirigami.Theme.textColor
+            Keys.onLeftPressed: event => {
+                if (Application.layoutDirection === Qt.LeftToRight) {
+                    leaveButton.nextItemInFocusChain(false).forceActiveFocus(Qt.BacktabFocusReason);
+                }
+            }
+            Keys.onRightPressed: event => {
+                if (Application.layoutDirection === Qt.RightToLeft) {
+                    leaveButton.nextItemInFocusChain(false).forceActiveFocus(Qt.BacktabFocusReason);
+                }
+            }
+
+            onPressed: contextMenu.openRelative()
         }
     }
 
+    // The leave menu lists the actions that aren't pinned as buttons
     Instantiator {
         model: systemModel
 
@@ -110,6 +151,7 @@ Item {
 
             text: menuItem.model.display
             icon: menuItem.model.decoration
+            visible: !header.pinnedActions.includes(menuItem.model.favoriteId)
 
             onClicked: {
                 header.launcher.close();
