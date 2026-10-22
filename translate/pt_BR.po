@@ -1,13 +1,13 @@
-# Portuguese translations for AndromedaLauncher package
-# Traduções em português brasileiro para o AndromedaLauncher.
+# Portuguese translations for XLauncher package
+# Traduções em português brasileiro para o XLauncher.
 # Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the AndromedaLauncher package.
+# This file is distributed under the same license as the XLauncher package.
 # david <david@cachyos>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: AndromedaLauncher 0.6\n"
-"Report-Msgid-Bugs-To: https://github.com/EliverLara/AndromedaLauncher\n"
+"Project-Id-Version: XLauncher 0.6\n"
+"Report-Msgid-Bugs-To: https://github.com/AxiomOperator/XLauncher\n"
 "POT-Creation-Date: 2026-01-04 16:56-0600\n"
 "PO-Revision-Date: 2026-01-02 10:44+0000\n"
 "Last-Translator: david <david@cachyos>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: ../metadata.json
-msgid "Andromeda Launcher"
+msgid "XLauncher"
 msgstr ""
 
 #: ../metadata.json
@@ -165,7 +165,7 @@ msgid "All Applications (Default)"
 msgstr "Todos os aplicativos (padrão)"
 
 #: ../contents/ui/config/ConfigGeneral.qml
-msgid "Developement"
+msgid "Development"
 msgstr "Desenvolvimento"
 
 #: ../contents/ui/config/ConfigGeneral.qml

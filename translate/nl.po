@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: mmcklauncher\n"
-"Report-Msgid-Bugs-To: https://github.com/EliverLara/AndromedaLauncher\n"
+"Report-Msgid-Bugs-To: https://github.com/AxiomOperator/XLauncher\n"
 "POT-Creation-Date: 2026-01-04 16:56-0600\n"
 "PO-Revision-Date: 2022-03-08 13:20+0100\n"
 "Last-Translator: Heimen Stoffels <vistausss@fastmail.com>\n"
@@ -19,7 +19,7 @@ msgstr ""
 "X-Generator: Poedit 3.0.1\n"
 
 #: ../metadata.json
-msgid "Andromeda Launcher"
+msgid "XLauncher"
 msgstr ""
 
 #: ../metadata.json
@@ -165,7 +165,7 @@ msgid "All Applications (Default)"
 msgstr "Alle programma's (standaard)"
 
 #: ../contents/ui/config/ConfigGeneral.qml
-msgid "Developement"
+msgid "Development"
 msgstr "Ontwikkeling"
 
 #: ../contents/ui/config/ConfigGeneral.qml

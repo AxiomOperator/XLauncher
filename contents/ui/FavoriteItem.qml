@@ -16,214 +16,179 @@
  *   Free Software Foundation, Inc.,                                         *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
  ****************************************************************************/
-import QtQuick 2.12
-import QtQuick.Layouts 1.12
-import Qt5Compat.GraphicalEffects
-import QtQuick.Window 2.2
-import org.kde.plasma.components 3.0 as PlasmaComponents
-import org.kde.plasma.extras as PlasmaExtras
-import org.kde.plasma.plasmoid 2.0
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.coreaddons 1.0 as KCoreAddons
+
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Effects
 import org.kde.kirigami as Kirigami
-import QtQuick.Controls 2.15
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.plasma.plasmoid
 
 import "../code/tools.js" as Tools
 
 Item {
-  id: favItem
+    id: favItem
 
-  required property var model
-  required property int index
-  required property url url
-  property var triggerModel
+    required property var model
+    required property int index
+    required property url url
+    required property AppGridView grid
+    required property LauncherState launcher
+    // The model this item belongs to; Kicker's model base class isn't exposed to QML
+    required property var triggerModel
 
-  width: root.cellSizeWidth
-  height: root.cellSizeHeight
+    readonly property bool hasActionList: favItem.model.favoriteId !== null
+                                          || ("hasActionList" in favItem.model && favItem.model.hasActionList !== null)
+    readonly property bool isCurrentItem: favItem.GridView.isCurrentItem
 
-  signal itemActivated(int index, string actionId, string argument)
-  signal actionTriggered(string actionId, variant actionArgument)
-  signal aboutToShowActionMenu(variant actionMenu)
-
-  property bool isDraging: false
-
-  property bool hasActionList: ((model.favoriteId !== null)
-      || (("hasActionList" in model) && (model.hasActionList !== null)))    
-
-  property Item dragIconItem: appicon
-  readonly property Flickable view: ListView.view ?? GridView.view
-
-  z: Drag.active ? 4 : 1
-
-  function openActionMenu(visualParent, x, y) {
-    aboutToShowActionMenu(actionMenu);
-    actionMenu.visualParent = visualParent;
-    actionMenu.open(x, y);
-  }
-
-  function trigger() {
-    triggerModel.trigger(index, "", null);
-    root.toggle()
-  }
-
-  onAboutToShowActionMenu: actionMenu => {
-        const actionList = (model.hasActionList !== null) ? model.actionList : [];
-        Tools.fillActionMenu(i18n, actionMenu, actionList, globalFavorites, model.favoriteId);
+    function openActionMenu(visualParent: Item, x: real, y: real): void {
+        const actionList = favItem.model.hasActionList !== null ? favItem.model.actionList : [];
+        Tools.fillActionMenu(i18n, actionMenu, actionList, favItem.launcher.globalFavorites, favItem.model.favoriteId);
+        actionMenu.visualParent = visualParent;
+        actionMenu.open(x, y);
     }
-  onActionTriggered: (actionId, actionArgument) => {
-      if (Tools.triggerAction(triggerModel, model.index, actionId, actionArgument) === true) {
-            kicker.expanded = false;
+
+    function trigger(): void {
+        favItem.triggerModel.trigger(favItem.index, "", null);
+        favItem.launcher.close();
+    }
+
+    function actionTriggered(actionId: string, actionArgument: var): void {
+        if (Tools.triggerAction(favItem.triggerModel, favItem.index, actionId, actionArgument) === true) {
+            favItem.launcher.close();
         }
-  }
-
-  function performDrag(handler: DragHandler): void {
-    if (!handler.active) {
-      kicker.dragSource.Drag.active = false;
-      kicker.dragSource.Drag.imageSource = "";
-      kicker.dragSource.sourceItem = null;
-      return;
     }
-    favItem.dragIconItem.grabToImage(result => {
-      if (!handler.active) {
-        return;
-      }
-      kicker.dragSource.sourceItem = favItem;
-      kicker.dragSource.Drag.imageSource = result.url;
-      kicker.dragSource.Drag.mimeData = {
-        "text/uri-list" : [favItem.url]
-      };
-      kicker.dragSource.Drag.active = handler.active;
-    });
-  }
 
- Kirigami.Icon {
-    id: appicon
-    y: (2 * highlightItemSvg.margins.top) 
-    anchors.horizontalCenter: parent.horizontalCenter
-    width: root.iconSize
-    height: width
-    source: model.decoration
-  }
-
-  PlasmaComponents.Label {
-    id: appname
-    text: ("name" in model ? model.name : model.display)
-    font.family: main.textFont
-    font.pointSize: main.textSize
-    color: main.textColor
-    anchors {
-      top: appicon.bottom
-      left: parent.left
-      right: parent.right
-      topMargin: Kirigami.Units.smallSpacing
-      leftMargin: Kirigami.Units.smallSpacing
-      rightMargin: Kirigami.Units.smallSpacing
-    }
-    textFormat: Text.PlainText
-    elide: Text.ElideMiddle
-    horizontalAlignment: Text.AlignHCenter
-    maximumLineCount: 2
-    wrapMode: Text.Wrap
-  }
-
-  DropShadow {
-    id:appIconGlow
-    visible: plasmoid.configuration.enableGlow
-    anchors.fill: appicon
-    cached: true
-    horizontalOffset: 0
-    verticalOffset: 0
-    radius: 15.0
-    samples: 16
-    color: main.glowColor1
-    source: appicon
-    states: [
-      State {
-        name: "highlight"; when: (focus)
-        PropertyChanges { target: appIconGlow; opacity: 1}
-         PropertyChanges { target: appNameGlow; opacity: 1}
-      },
-      State {
-        name: "default"; when: (!focus)
-        PropertyChanges { target: appIconGlow; opacity: 0}
-        PropertyChanges { target: appNameGlow; opacity: 0}
-      }
-    ]
-    transitions: highlight
-  }
-
-  DropShadow {
-    id: appNameGlow
-    visible: plasmoid.configuration.enableGlow
-    anchors.fill: appname
-    cached: true
-    horizontalOffset: 0
-    verticalOffset: 0
-    radius: 15.0
-    samples: 16
-    color: main.glowColor1
-    source: appname
-  }
-  
-  MouseArea {
-      id: ma
-      anchors.fill: parent
-      z: parent.z + 1
-      acceptedButtons: Qt.LeftButton | Qt.RightButton
-      cursorShape: Qt.PointingHandCursor
-      hoverEnabled: !grid.movedWithWheel
-      onClicked: {
-       
-          if (mouse.button == Qt.RightButton ) {
-            if (favItem.hasActionList) {
-                var mapped = mapToItem(favItem, mouse.x, mouse.y);
-                favItem.openActionMenu(favItem, mouse.x, mouse.y);
+    function performDrag(handler: DragHandler): void {
+        const dragSource = favItem.launcher.dragSource;
+        if (!handler.active) {
+            dragSource.Drag.active = false;
+            dragSource.Drag.imageSource = "";
+            dragSource.sourceItem = null;
+            return;
+        }
+        appicon.grabToImage(result => {
+            if (!handler.active) {
+                return;
             }
-          } else {
-           trigger();
-          }
-        
-      }
-      onReleased: {
-        isDraging: false
-      }
-      onEntered: {
-          // - When the movedWithKeyboard condition is broken, we do not want to
-          //   select the hovered item without moving the mouse.
-          // - Don't highlight separators.
-          // - Don't switch category items on hover if the setting isn't enabled
-          if (grid.movedWithKeyboard) {
-              return
-          }
+            dragSource.sourceItem = favItem;
+            dragSource.Drag.imageSource = result.url;
+            dragSource.Drag.mimeData = {
+                "text/uri-list": [favItem.url]
+            };
+            dragSource.Drag.active = handler.active;
+        });
+    }
 
-          // forceActiveFocus() touches multiple items, so check for
-          // activeFocus first to be more efficient.
-          if (!grid.activeFocus) {
-              grid.forceActiveFocus(Qt.MouseFocusReason)
-          }
-          // No need to check currentIndex first because it's
-          // built into QQuickListView::setCurrentIndex() already
-          grid.currentIndex = index        
-      }
-  }
-  ActionMenu {
-      id: actionMenu
+    width: favItem.launcher.cellSizeWidth
+    height: favItem.launcher.cellSizeHeight
+    z: dragHandler.active ? 4 : 1
 
-      onActionClicked: {
-          actionTriggered(actionId, actionArgument);
-         // root.toggle()
-      }
-  }
-  Transition {
-    id: highlight
-    ColorAnimation {duration: 100 }
-  }
+    Kirigami.Icon {
+        id: appicon
 
-  DragHandler {
-      id: dragHandler
-      acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
-      enabled: favItem.dragIconItem !== null
-      target: null // Using this Item fixes drag and drop causing delegates to reset to a 0 X position and overlapping each other.
-      onActiveChanged: favItem.performDrag(this)
-  }
+        y: 2 * favItem.launcher.highlightItemSvg.margins.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: favItem.launcher.iconSize
+        height: appicon.width
+        source: favItem.model.decoration
+    }
+
+    PlasmaComponents.Label {
+        id: appname
+
+        anchors {
+            top: appicon.bottom
+            left: parent.left
+            right: parent.right
+            topMargin: Kirigami.Units.smallSpacing
+            leftMargin: Kirigami.Units.smallSpacing
+            rightMargin: Kirigami.Units.smallSpacing
+        }
+
+        text: "name" in favItem.model ? favItem.model.name : favItem.model.display
+        font.family: favItem.launcher.textFont
+        font.pointSize: favItem.launcher.textSize
+        color: Kirigami.Theme.textColor
+        textFormat: Text.PlainText
+        elide: Text.ElideMiddle
+        horizontalAlignment: Text.AlignHCenter
+        maximumLineCount: 2
+        wrapMode: Text.Wrap
+    }
+
+    // Glow around the current item's icon and name
+    component Glow: MultiEffect {
+        visible: Plasmoid.configuration.enableGlow
+        opacity: favItem.isCurrentItem ? 1 : 0
+        shadowEnabled: true
+        shadowColor: favItem.launcher.glowColor1
+        shadowBlur: 0.9
+        blurMax: 16
+
+        Behavior on opacity {
+            NumberAnimation { duration: 100 }
+        }
+    }
+
+    Glow {
+        anchors.fill: appicon
+        source: appicon
+    }
+
+    Glow {
+        anchors.fill: appname
+        source: appname
+    }
+
+    MouseArea {
+        id: ma
+
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        cursorShape: Qt.PointingHandCursor
+        hoverEnabled: !favItem.grid.movedWithWheel
+
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton) {
+                if (favItem.hasActionList) {
+                    favItem.openActionMenu(favItem, mouse.x, mouse.y);
+                }
+            } else {
+                favItem.trigger();
+            }
+        }
+
+        onEntered: {
+            // When the movedWithKeyboard condition is broken, we do not want to
+            // select the hovered item without moving the mouse.
+            if (favItem.grid.movedWithKeyboard) {
+                return;
+            }
+
+            // forceActiveFocus() touches multiple items, so check for
+            // activeFocus first to be more efficient.
+            if (!favItem.grid.activeFocus) {
+                favItem.grid.forceActiveFocus(Qt.MouseFocusReason);
+            }
+            // No need to check currentIndex first because it's
+            // built into QQuickListView::setCurrentIndex() already
+            favItem.grid.currentIndex = favItem.index;
+        }
+    }
+
+    ActionMenu {
+        id: actionMenu
+
+        onActionClicked: (actionId, actionArgument) => favItem.actionTriggered(actionId, actionArgument)
+    }
+
+    DragHandler {
+        id: dragHandler
+
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
+        target: null // Using this Item fixes drag and drop causing delegates to reset to a 0 X position and overlapping each other.
+        onActiveChanged: favItem.performDrag(dragHandler)
+    }
 }

@@ -1,13 +1,13 @@
-# Translation of AndromedaLauncher in it
+# Translation of XLauncher in it
 # Copyright (C) 2026
-# This file is distributed under the same license as the AndromedaLauncher package.
+# This file is distributed under the same license as the XLauncher package.
 # Gianpaolo <pingurussi@gmail.com>, 2026.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: AndromedaLauncher\n"
-"Report-Msgid-Bugs-To: https://github.com/EliverLara/AndromedaLauncher\n"
+"Project-Id-Version: XLauncher\n"
+"Report-Msgid-Bugs-To: https://github.com/AxiomOperator/XLauncher\n"
 "POT-Creation-Date: 2026-01-04 16:56-0600\n"
 "PO-Revision-Date: 2026-03-02 20:07+0100\n"
 "Last-Translator: Gianpaolo <pingurussi@gmail.com>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../metadata.json
-msgid "Andromeda Launcher"
+msgid "XLauncher"
 msgstr ""
 
 #: ../metadata.json
@@ -164,7 +164,7 @@ msgid "All Applications (Default)"
 msgstr "Tutte le applicazioni (predefinito)"
 
 #: ../contents/ui/config/ConfigGeneral.qml
-msgid "Developement"
+msgid "Development"
 msgstr "Sviluppo"
 
 #: ../contents/ui/config/ConfigGeneral.qml

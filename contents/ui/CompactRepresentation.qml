@@ -19,85 +19,64 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
  ****************************************************************************/
 
-import QtQuick 2.15
-import QtQuick.Layouts 1.15
+pragma ComponentBehavior: Bound
 
-import org.kde.plasma.plasmoid 2.0
-import org.kde.plasma.core as PlasmaCore
-
+import QtQuick
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasmoid
 
 Item {
     id: root
 
-    property QtObject dashWindow: null
-    readonly property bool useCustomButtonImage: (Plasmoid.configuration.useCustomButtonImage && Plasmoid.configuration.customButtonImage.length != 0)
+    required property LauncherState launcher
+
+    readonly property bool useCustomButtonImage: Plasmoid.configuration.useCustomButtonImage
+                                                 && String(Plasmoid.configuration.customButtonImage).length > 0
+
+    Plasmoid.status: root.launcher.menuOpen ? PlasmaCore.Types.RequiresAttentionStatus : PlasmaCore.Types.PassiveStatus
+
+    Plasmoid.onActivated: root.launcher.toggle()
 
     Kirigami.Icon {
         id: buttonIcon
 
-        width: Plasmoid.configuration.activationIndicator ? parent.width * 0.65 : parent.width
-        height: Plasmoid.configuration.activationIndicator ? parent.height * 0.65 : parent.height
+        width: Plasmoid.configuration.activationIndicator ? root.width * 0.65 : root.width
+        height: Plasmoid.configuration.activationIndicator ? root.height * 0.65 : root.height
         anchors.centerIn: parent
 
-        source: useCustomButtonImage ? Plasmoid.configuration.customButtonImage : Plasmoid.configuration.icon
-
+        source: root.useCustomButtonImage ? Plasmoid.configuration.customButtonImage : Plasmoid.configuration.icon
         active: mouseArea.containsMouse
-
         smooth: true
 
         Rectangle {
-          id: indicator
-          width: 0
-          anchors.horizontalCenter: parent.horizontalCenter
-          height: 3 * 1
-          radius: 10
-          y: parent.height + height
-          color: Plasmoid.configuration.indicatorColor
-          visible: Plasmoid.configuration.activationIndicator
+            id: indicator
 
-          states: [
-            State { name: "inactive"
-            when: !dashWindow.visible
-            PropertyChanges {
-                target: indicator
-                width: 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: buttonIcon.height + indicator.height
+            width: root.launcher.menuOpen ? buttonIcon.width * 0.65 : 0
+            height: 3
+            radius: 10
+            color: Plasmoid.configuration.indicatorColor
+            visible: Plasmoid.configuration.activationIndicator
 
-              }
-            },
-            State { name: "active"
-            when: dashWindow.visible
-            PropertyChanges {
-                target: indicator
-                width: parent.width * 0.65
-              }
+            Behavior on width {
+                NumberAnimation { duration: 60 }
             }
-          ]
-          transitions: [
-            Transition {
-              NumberAnimation { properties: 'width'; duration: 60}
-            }
-          ]
         }
     }
 
-    MouseArea
-    {
+    MouseArea {
         id: mouseArea
 
         anchors.fill: parent
-
         hoverEnabled: true
 
-        onClicked: {
-            dashWindow.visible = !dashWindow.visible;
-        }
+        onClicked: root.launcher.toggle()
     }
 
-    Component.onCompleted: {
-        dashWindow = Qt.createQmlObject("MenuRepresentation {}", root);
-        plasmoid.activated.connect(function() {
-            dashWindow.visible = !dashWindow.visible;
-        });
+    MenuRepresentation {
+        launcher: root.launcher
+        anchorItem: root
     }
 }

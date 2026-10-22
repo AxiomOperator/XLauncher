@@ -20,178 +20,170 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
  ****************************************************************************/
 
-import QtQuick 2.15
-import QtQuick.Layouts 1.15
-import QtQml 2.15
+pragma ComponentBehavior: Bound
 
+import QtQuick
+import QtQuick.Layouts
 import org.kde.plasma.core as PlasmaCore
-import org.kde.plasma.components 3.0 as PlasmaComponents
-
-import org.kde.plasma.plasmoid 2.0
-import org.kde.kirigami as Kirigami
+import org.kde.plasma.plasmoid
 
 PlasmaCore.Dialog {
     id: root
 
+    required property LauncherState launcher
+    // The panel button the launcher opens from
+    required property Item anchorItem
+
     objectName: "popupWindow"
     flags: Qt.WindowStaysOnTopHint
 
-    location: Plasmoid.configuration.floating || Plasmoid.configuration.launcherPosition == 2 ? "Floating" : Plasmoid.location
+    location: Plasmoid.configuration.floating || Plasmoid.configuration.launcherPosition === 2 ? PlasmaCore.Types.Floating : Plasmoid.location
     hideOnWindowDeactivate: true
+    visible: root.launcher.menuOpen
 
-    Plasmoid.status: root.visible ? PlasmaCore.Types.RequiresAttentionStatus : PlasmaCore.Types.PassiveStatus
-
-    property int iconSize: { 
-      switch(Plasmoid.configuration.appsIconSize){
-        case 0: return Kirigami.Units.iconSizes.smallMedium;
-        case 1: return Kirigami.Units.iconSizes.medium;
-        case 2: return Kirigami.Units.iconSizes.large;
-        case 3: return Kirigami.Units.iconSizes.huge;
-        default: return 64
-      }
-    }
-
-    property int cellSizeHeight: iconSize
-                                     + Kirigami.Units.gridUnit * 2
-                                     + (2 * Math.max(highlightItemSvg.margins.top + highlightItemSvg.margins.bottom,
-                                                     highlightItemSvg.margins.left + highlightItemSvg.margins.right))
-    property int cellSizeWidth: cellSizeHeight //+ Kirigami.Units.gridUnit
-    
-    property int rows: Plasmoid.configuration.numberOfRows
-    
     onVisibleChanged: {
-        if (!visible) {
-            reset();
+        // The window also hides itself when it loses focus
+        root.launcher.menuOpen = root.visible;
+        if (!root.visible) {
+            mainView.reset();
         } else {
-            var pos = popupPosition(width, height);
-            x = pos.x;
-            y = pos.y;
-            requestActivate();
+            root.updatePosition();
+            root.requestActivate();
         }
     }
 
-    onHeightChanged: {
-        var pos = popupPosition(width, height);
-        x = pos.x;
-        y = pos.y;
+    onHeightChanged: root.updatePosition()
+    onWidthChanged: root.updatePosition()
+
+    function updatePosition(): void {
+        const pos = root.popupPosition(root.width, root.height);
+        root.x = pos.x;
+        root.y = pos.y;
     }
 
-    onWidthChanged: {
-        var pos = popupPosition(width, height);
-        x = pos.x;
-        y = pos.y;
-    }
+    function popupPosition(width: real, height: real): point {
+        const screen = root.launcher.plasmoidItem.screenGeometry;
+        const anchor = root.anchorItem;
+        const panelMargins = root.launcher.panelSvg.margins;
 
-    function toggle() {
-      root.visible = false;
-    }
-
-    function reset() {
-        main.reset()
-    }
-
-    function popupPosition(width, height) {
-        var screenAvail = Plasmoid.availableScreenRect;
-        var screen/*Geom*/ = kicker.screenGeometry;
-        //QtBug - QTBUG-64115
-        /*var screen = Qt.rect(screenAvail.x + screenGeom.x,
-            screenAvail.y + screenGeom.y,
-            screenAvail.width,
-            screenAvail.height);*/
-
-        var offset = 0
+        let offset = 0;
 
         if (Plasmoid.configuration.offsetX > 0 && Plasmoid.configuration.floating) {
-          offset = Plasmoid.configuration.offsetX
+            offset = Plasmoid.configuration.offsetX;
         } else {
-          offset = plasmoid.configuration.floating ? parent.height * 0.35 : 0
+            offset = Plasmoid.configuration.floating ? anchor.height * 0.35 : 0;
         }
-        // Fall back to bottom-left of screen area when the applet is on the desktop or floating.
-        var x = offset;
-        var y = screen.height - height - offset;
-        var horizMidPoint = screen.x + (screen.width / 2);
-        var vertMidPoint = screen.y + (screen.height / 2);
-        var appletTopLeft = parent.mapToGlobal(0, 0);
-        var appletBottomLeft = parent.mapToGlobal(0, parent.height);
 
-        if (Plasmoid.configuration.launcherPosition != 0){
-          x = horizMidPoint - width / 2;
-        } else {
-          x = (appletTopLeft.x < horizMidPoint) ? screen.x : (screen.x + screen.width) - width;
-          if (Plasmoid.configuration.floating) {
-            if (appletTopLeft.x < horizMidPoint) {
-              x += offset
-            } else if (appletTopLeft.x + width > horizMidPoint){
-              x -= offset
+        let x = offset;
+        let y = screen.height - height - offset;
+        const horizMidPoint = screen.x + (screen.width / 2);
+        const vertMidPoint = screen.y + (screen.height / 2);
+        const appletTopLeft = anchor.mapToGlobal(0, 0);
+
+        // Vertical panels: open beside the panel instead of over it
+        if (Plasmoid.configuration.launcherPosition !== 2
+            && (Plasmoid.location === PlasmaCore.Types.LeftEdge || Plasmoid.location === PlasmaCore.Types.RightEdge)) {
+            if (Plasmoid.location === PlasmaCore.Types.LeftEdge) {
+                x = appletTopLeft.x + anchor.width + panelMargins.right + offset;
+            } else {
+                x = appletTopLeft.x - width - panelMargins.left - offset;
             }
-          }
+            if (Plasmoid.configuration.launcherPosition === 1) {
+                y = vertMidPoint - height / 2;
+            } else {
+                y = Math.max(screen.y, Math.min(appletTopLeft.y, screen.y + screen.height - height));
+            }
+            return Qt.point(x, y);
         }
 
-        if (Plasmoid.configuration.launcherPosition != 2){
-          if (Plasmoid.location == PlasmaCore.Types.TopEdge) {
+        if (Plasmoid.configuration.launcherPosition !== 0) {
+            x = horizMidPoint - width / 2;
+        } else {
+            x = (appletTopLeft.x < horizMidPoint) ? screen.x : (screen.x + screen.width) - width;
             if (Plasmoid.configuration.floating) {
-                          /*this is floatingAvatar.width*/
-              if (Plasmoid.configuration.offsetY > 0) {
-                offset = (125 * 1) / 2 + Plasmoid.configuration.offsetY
-              } else {
-                offset = (125 * 1) / 2 + parent.height * 0.125
-              }
+                if (appletTopLeft.x < horizMidPoint) {
+                    x += offset;
+                } else {
+                    x -= offset;
+                }
             }
-            y = screen.y + parent.height + panelSvg.margins.bottom + offset;
-          } else {
-            if (Plasmoid.configuration.offsetY > 0) {
-              offset = Plasmoid.configuration.offsetY
+        }
+
+        if (Plasmoid.configuration.launcherPosition !== 2) {
+            if (Plasmoid.location === PlasmaCore.Types.TopEdge) {
+                if (Plasmoid.configuration.floating) {
+                    // Leave room for the floating avatar (125 px wide) above the menu
+                    if (Plasmoid.configuration.offsetY > 0) {
+                        offset = 125 / 2 + Plasmoid.configuration.offsetY;
+                    } else {
+                        offset = 125 / 2 + anchor.height * 0.125;
+                    }
+                }
+                y = screen.y + anchor.height + panelMargins.bottom + offset;
+            } else {
+                // Gap above the panel when floating: offsetY in pixels (as on top panels),
+                // otherwise a default proportional to the panel height
+                let panelGap = 0;
+                if (Plasmoid.configuration.floating) {
+                    panelGap = Plasmoid.configuration.offsetY > 0 ? Plasmoid.configuration.offsetY : anchor.height * 0.875;
+                }
+                y = screen.y + screen.height - anchor.height - height - panelMargins.top - panelGap;
             }
-            y = screen.y + screen.height - parent.height - height - panelSvg.margins.top - offset * 2.5;
-          }
         } else {
-          y = vertMidPoint - height / 2
+            y = vertMidPoint - height / 2;
         }
 
         return Qt.point(x, y);
     }
 
     FocusScope {
-        id: fs
+        id: content
+
+        // A uniform margin around MainView across Plasma themes
+        readonly property real innerPadding: 15
+
         focus: true
-        Layout.minimumWidth:  (root.cellSizeWidth * Plasmoid.configuration.numberColumns) + scrollBarMetrics.width + innerPadding*2
-        Layout.minimumHeight: main.headerLabelRow.height
-                              + main.searchBar.height
-                              + main.contentY.y
-                              + main.itemSpacing * 3
-                              + root.cellSizeHeight * rows
-                              + innerPadding / 2
-        Layout.maximumWidth: Layout.minimumWidth
-        Layout.maximumHeight: Layout.minimumHeight
-        
-        // We want the MainView to have an uniform margin through different plasma themes
-        property real innerPadding: 15 
+        // Sized up front (not only via Layout) so the dialog never sees empty content when first shown
+        width: content.Layout.minimumWidth
+        height: content.Layout.minimumHeight
 
-        Item {
-          id: mainItem
-          x: - dialogSvg.margins.left
-          y: - dialogSvg.margins.top
-          width: parent.width + dialogSvg.margins.left + dialogSvg.margins.right
-          height: parent.height + dialogSvg.margins.top + dialogSvg.margins.bottom
-
-          MainView {
-            id: main
-            
-            anchors.fill: parent
-            anchors.margins: fs.innerPadding
-          }
-        }
+        Layout.minimumWidth: root.launcher.cellSizeWidth * Plasmoid.configuration.numberColumns
+                             + root.launcher.scrollBarWidth
+                             + content.innerPadding * 2
+        Layout.minimumHeight: mainView.contentHeight + content.innerPadding / 2
+        Layout.maximumWidth: content.Layout.minimumWidth
+        Layout.maximumHeight: content.Layout.minimumHeight
 
         Keys.onPressed: event => {
-            if (event.key == Qt.Key_Escape) {
-                root.visible = false;
+            if (event.key === Qt.Key_Escape) {
+                root.launcher.close();
             }
         }
-    }
 
-    Component.onCompleted: {
-        kicker.reset.connect(reset);
-       // windowSystem.hidden.connect(reset);
-        rootModel.refresh();
+        Connections {
+            target: root.launcher
+
+            function onReset(): void {
+                mainView.reset();
+            }
+        }
+
+        // Extends over the dialog's frame margins, so the padding above is all MainView gets
+        Item {
+            x: -root.launcher.dialogSvg.margins.left
+            y: -root.launcher.dialogSvg.margins.top
+            width: content.width + root.launcher.dialogSvg.margins.left + root.launcher.dialogSvg.margins.right
+            height: content.height + root.launcher.dialogSvg.margins.top + root.launcher.dialogSvg.margins.bottom
+
+            MainView {
+                id: mainView
+
+                anchors.fill: parent
+                anchors.margins: content.innerPadding
+
+                launcher: root.launcher
+                dialog: root
+            }
+        }
     }
 }

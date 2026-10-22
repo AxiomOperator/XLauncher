@@ -17,64 +17,68 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
  ****************************************************************************/
 
-import QtQuick 2.12
+pragma ComponentBehavior: Bound
 
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.plasma.extras 2.0 as PlasmaExtras
-
-import org.kde.plasma.private.kicker 0.1 as Kicker
-
-import QtQuick.Window 2.2
-import org.kde.plasma.components 3.0 as PlasmaComponents
-import QtQuick.Layouts 1.15
-import QtQuick.Controls 2.15
-
+import QtQuick
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.extras as PlasmaExtras
 
-AppListView {
-  id: searchList
+// Search results
+LauncherPage {
+    id: runnerList
 
-  property alias viewItem: searchList
+    property alias model: searchList.model
 
-  Loader {
-    anchors.fill: parent
-    width: searchList.width - (Kirigami.Units.gridUnit * 4)
+    viewItem: searchList
 
-    active: searchList.count === 0
-    visible: active
-    asynchronous: true
+    AppListView {
+        id: searchList
 
-    sourceComponent: PlasmaExtras.PlaceholderMessage {
-      id: emptyHint
+        anchors.fill: parent
+        launcher: runnerList.launcher
 
-      iconName: "edit-none"
-      opacity: 0
-      text: i18nc("@info:status", "No matches")
+        Loader {
+            anchors.fill: parent
 
-      Connections {
-        target: runnerModel
-        function onQueryFinished() {
-          showAnimation.restart()
+            active: searchList.count === 0
+            visible: active
+            asynchronous: true
+
+            sourceComponent: PlasmaExtras.PlaceholderMessage {
+                id: emptyHint
+
+                iconName: "edit-none"
+                opacity: 0
+                text: i18nc("@info:status", "No matches")
+
+                Connections {
+                    target: runnerList.launcher.runnerModel
+
+                    function onQueryFinished(): void {
+                        showAnimation.restart();
+                    }
+                }
+
+                NumberAnimation {
+                    id: showAnimation
+
+                    duration: Kirigami.Units.longDuration
+                    easing.type: Easing.OutCubic
+                    property: "opacity"
+                    target: emptyHint
+                    to: 1
+                }
+            }
         }
-      }
 
-      NumberAnimation {
-        id: showAnimation
-        duration: Kirigami.Units.longDuration
-        easing.type: Easing.OutCubic
-        property: "opacity"
-        target: emptyHint
-        to: 1
-      }
-    }
-  }
+        Connections {
+            target: runnerList.launcher.runnerModel
 
-  Connections {
-    target: runnerModel
-    function onQueryChanged() { 
-      searchList.blockingHoverFocus = true;
-      searchList.interceptedPosition = null;
-      searchList.currentIndex = 0;
+            function onQueryChanged(): void {
+                searchList.blockingHoverFocus = true;
+                searchList.interceptedPosition = null;
+                searchList.currentIndex = 0;
+            }
+        }
     }
-  }
 }

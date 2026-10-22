@@ -1,27 +1,41 @@
-import QtQuick 2.15
-import Qt5Compat.GraphicalEffects
+import QtQuick
+import QtQuick.Effects
+import org.kde.kirigami as Kirigami
+import org.kde.plasma.plasmoid
 
 Item {
-    property var textSize
-    readonly property var textWidth: nameLabel.width
+    id: greeting
+
+    required property LauncherState launcher
+
+    property real textSize
+    readonly property real textWidth: nameLabel.width
+
     Text {
         id: nameLabel
-        text: plasmoid.configuration.enableGreeting && plasmoid.configuration.customGreeting ? plasmoid.configuration.customGreeting : plasmoid.configuration.enableGreeting ? i18n("Hi, %1", kuser.fullName): i18n("%1@%2", kuser.loginName, kuser.host)
-        color: textColor
-        font.family: textFont
-        font.pixelSize: textSize
+
+        text: {
+            const config = Plasmoid.configuration;
+            const user = greeting.launcher.user;
+            if (config.enableGreeting && config.customGreeting) {
+                return config.customGreeting;
+            }
+            return config.enableGreeting ? i18n("Hi, %1", user.fullName) : i18n("%1@%2", user.loginName, user.host);
+        }
+        color: Kirigami.Theme.textColor
+        font.family: greeting.launcher.textFont
+        font.pixelSize: greeting.textSize
         font.bold: true
     }
-    // Text shadow for greeting label
-    DropShadow {
+
+    // Text glow
+    MultiEffect {
         anchors.fill: nameLabel
-        cached: true
-        horizontalOffset: 0
-        verticalOffset: 0
-        radius: 10.0
-        samples: 16
-        color: glowColor1
         source: nameLabel
-        visible: plasmoid.configuration.enableGlow
+        visible: Plasmoid.configuration.enableGlow
+        shadowEnabled: true
+        shadowColor: greeting.launcher.glowColor1
+        shadowBlur: 0.6
+        blurMax: 16
     }
 }

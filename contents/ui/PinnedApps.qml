@@ -1,45 +1,48 @@
+pragma ComponentBehavior: Bound
 
-import QtQuick 2.12
-import QtQuick.Controls 2.15
+import QtQuick
+import org.kde.plasma.plasmoid
 
-import QtQuick.Layouts 1.0
+// Favorite or recent apps, depending on the "Pinned applications Page" setting
+LauncherPage {
+    id: pinnedApps
 
-import org.kde.plasma.core as PlasmaCore
-import org.kde.plasma.components 3.0 as PlasmaComponents
+    property Item searchField: null
 
-import org.kde.kirigami as Kirigami
+    viewItem: pinnedAppsGrid
 
-DropArea {    
-    property alias viewItem: pinnedAppsGrid
-    AppGridView {
-        id: pinnedAppsGrid
-        
+    DropArea {
+        id: dropArea
+
         anchors.fill: parent
-        leftMargin: scrollBarMetrics.width / 1.5
-        
-        property QtObject recentAppsModel: rootModel.modelForRow(0);
-        showScrollBar: false
 
-        model: main.pinnedModel == 0 ? globalFavorites : recentAppsModel
-
-        Component.onCompleted: {
-            recentAppsModel = rootModel.modelForRow(0);
+        // Reorders favorites while one is dragged within the grid
+        onPositionChanged: drag => {
+            if (drag.source !== pinnedApps.launcher.dragSource) {
+                return;
+            }
+            const source = pinnedApps.launcher.dragSource.sourceItem as FavoriteItem;
+            if (source === null || source.grid !== pinnedAppsGrid) {
+                return;
+            }
+            const pos = dropArea.mapToItem(pinnedAppsGrid.contentItem, drag.x, drag.y);
+            const targetIndex = pinnedAppsGrid.indexAt(pos.x, pos.y);
+            if (targetIndex >= 0 && targetIndex !== source.index) {
+                pinnedApps.launcher.globalFavorites.moveRow(source.index, targetIndex);
+            }
         }
-    }
-    onPositionChanged: drag => {
-        if (drag.source === kicker.dragSource) {
-            const source = kicker.dragSource.sourceItem
-            if (source === null) {
-                return
-            }
-            const view = source.view
-            if (source.view === pinnedAppsGrid ) {
-                const pos = mapToItem(view.contentItem, drag.x, drag.y)
-                const targetIndex = view.indexAt(pos.x, pos.y)
-                if (targetIndex >= 0 && targetIndex !== source.index) {
-                    globalFavorites.moveRow(source.index, targetIndex)
-                }
-            }
+
+        AppGridView {
+            id: pinnedAppsGrid
+
+            anchors.fill: parent
+            leftMargin: pinnedApps.launcher.scrollBarWidth / 1.5
+
+            launcher: pinnedApps.launcher
+            searchField: pinnedApps.searchField
+            showScrollBar: false
+
+            model: Plasmoid.configuration.pinnedModel === 0 ? pinnedApps.launcher.globalFavorites : pinnedApps.launcher.rootModel.modelForRow(0)
         }
     }
 }

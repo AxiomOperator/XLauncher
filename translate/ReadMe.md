@@ -21,7 +21,7 @@
 
 ## New Translations
 
-* Fill out [`template.pot`](template.pot) with your translations then open a [new issue](https://github.com/EliverLara/AndromedaLauncher/issues/new), name the file `spanish.txt`, attach the txt file to the issue (drag and drop).
+* Fill out [`template.pot`](template.pot) with your translations then open a [new issue](https://github.com/AxiomOperator/XLauncher/issues/new), name the file `spanish.txt`, attach the txt file to the issue (drag and drop).
 
 Or if you know how to make a pull request
 
@@ -48,7 +48,7 @@ Since KDE Frameworks v5.37, translations can be bundled with the zipped `*.plasm
 The binary `.mo` translation files are placed in `package/contents/locale/` so you may want to add `*.mo` to your `.gitignore`.
 
 ```
-package/contents/locale/fr/LC_MESSAGES/plasma_applet_AndromedaLauncher.mo
+package/contents/locale/fr/LC_MESSAGES/plasma_applet_XLauncher.mo
 ```
 
 ## Links

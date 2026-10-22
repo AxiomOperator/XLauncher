@@ -1,12 +1,12 @@
-# Spanish (Latin America) translation for Andromeda Launcher
+# Spanish (Latin America) translation for XLauncher
 # Copyright (C) 2026 EliverLara
-# This file is distributed under the same license as the AndromedaLauncher package.
+# This file is distributed under the same license as the XLauncher package.
 # Gregorio Troncoso <gregolauty94@gmail.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plasma_applet_AndromedaLauncher\n"
-"Report-Msgid-Bugs-To: https://github.com/EliverLara/AndromedaLauncher\n"
+"Project-Id-Version: plasma_applet_XLauncher\n"
+"Report-Msgid-Bugs-To: https://github.com/AxiomOperator/XLauncher\n"
 "POT-Creation-Date: 2026-01-04 16:56-0600\n"
 "PO-Revision-Date: 2026-03-24 21:00-0300\n"
 "Last-Translator: Gregorio Troncoso <gregolauty94@gmail.com>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../metadata.json
-msgid "Andromeda Launcher"
+msgid "XLauncher"
 msgstr ""
 
 #: ../metadata.json
@@ -167,7 +167,7 @@ msgid "All Applications (Default)"
 msgstr "Todas las aplicaciones (predeterminado)"
 
 #: ../contents/ui/config/ConfigGeneral.qml
-msgid "Developement"
+msgid "Development"
 msgstr "Desarrollo"
 
 #: ../contents/ui/config/ConfigGeneral.qml

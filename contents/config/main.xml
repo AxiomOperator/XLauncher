@@ -15,7 +15,7 @@
       <default>false</default>
     </entry>
     <entry name="customButtonImage" type="Url">
-      <label>The URL of the custtom image to use instead of an icon in the compact representation (e.g. on a small panel).</label>
+      <label>The URL of the custom image to use instead of an icon in the compact representation (e.g. on a small panel).</label>
       <default></default>
     </entry>
     <entry name="activationIndicator" type="Bool">
@@ -37,6 +37,10 @@
     <entry name="defaultPage" type="Int">
       <label>Default Page</label>
       <default>0</default>
+    </entry>
+    <entry name="categoryNames" type="StringList" hidden="true">
+      <label>Names of the All Apps pages, written by the launcher for the Default Page setting.</label>
+      <default></default>
     </entry>
     <entry name="customGreeting" type="String">
       <label>Custom greeting Text</label>

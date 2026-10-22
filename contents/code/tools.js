@@ -12,12 +12,12 @@ function fillActionMenu(i18n, actionMenu, actionList, favoriteModel, favoriteId)
     // Accessing actionList can be a costly operation, so we don't
     // access it until we need the menu.
 
-    var actions = createFavoriteActions(i18n, favoriteModel, favoriteId);
+    const actions = createFavoriteActions(i18n, favoriteModel, favoriteId);
 
     if (actions) {
         if (actionList && actionList.length > 0) {
-            var actionListCopy = Array.from(actionList);
-            var separator = { "type": "separator" };
+            const actionListCopy = Array.from(actionList);
+            const separator = { "type": "separator" };
             actionListCopy.push(separator);
             // actionList = actions.concat(actionList); // this crashes Qt O.o
             actionListCopy.push.apply(actionListCopy, actions);
@@ -38,7 +38,7 @@ function createFavoriteActions(i18n, favoriteModel, favoriteId) {
 
     if (favoriteModel.activities === undefined ||
         favoriteModel.activities.activities.length <= 1) {
-        var action = {};
+        const action = {};
 
         if (favoriteModel.isFavorite(favoriteId)) {
             action.text = i18n("Remove from Favorites");
@@ -57,15 +57,15 @@ function createFavoriteActions(i18n, favoriteModel, favoriteId) {
         return [action];
 
     } else {
-        var actions = [];
+        const actions = [];
 
-        var linkedActivities = favoriteModel.linkedActivitiesFor(favoriteId);
+        const linkedActivities = favoriteModel.linkedActivitiesFor(favoriteId);
 
-        var activities = favoriteModel.activities.activities;
+        const activities = favoriteModel.activities.activities;
 
         // Adding the item to link/unlink to all activities
 
-        var linkedToAllActivities =
+        const linkedToAllActivities =
             !(linkedActivities.indexOf(":global") === -1);
 
         actions.push({
@@ -87,8 +87,8 @@ function createFavoriteActions(i18n, favoriteModel, favoriteId) {
 
         // Adding items for each activity separately
 
-        var addActivityItem = function(activityId, activityName) {
-            var linkedToThisActivity =
+        const addActivityItem = function(activityId, activityName) {
+            const linkedToThisActivity =
                 !(linkedActivities.indexOf(activityId) === -1);
 
             actions.push({
@@ -150,7 +150,7 @@ function triggerAction(model, index, actionId, actionArgument) {
         return;
     }
 
-    var closeRequested = model.trigger(index, actionId, actionArgument);
+    const closeRequested = model.trigger(index, actionId, actionArgument);
 
     if (closeRequested) {
         return true;
@@ -160,8 +160,8 @@ function triggerAction(model, index, actionId, actionArgument) {
 }
 
 function handleFavoriteAction(actionId, actionArgument) {
-    var favoriteId = actionArgument.favoriteId;
-    var favoriteModel = actionArgument.favoriteModel;
+    const favoriteId = actionArgument.favoriteId;
+    const favoriteModel = actionArgument.favoriteModel;
 
     if (favoriteModel === null || favoriteId === null) {
         return null;

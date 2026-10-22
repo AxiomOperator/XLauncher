@@ -16,40 +16,30 @@
  *   Free Software Foundation, Inc.,                                         *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
  ****************************************************************************/
-import QtQuick 2.12
-import QtQuick.Window 2.2
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.kirigami as Kirigami
-import org.kde.kirigamiaddons.components 1.0 as KirigamiComponents
-import org.kde.kcmutils as KCM
 
-PlasmaCore.Dialog { //cosmic background noise is less random than the placement of this dialog
-  id: avatarContainer
+import QtQuick
+import org.kde.plasma.core as PlasmaCore
 
-  property int avatarWidth
-  property bool isTop: false
+// The user's avatar, floating over the top edge of the launcher window
+PlasmaCore.Dialog {
+    id: avatarContainer
 
-  type: "Notification"
+    required property LauncherState launcher
+    // The launcher window this avatar sits on
+    required property PlasmaCore.Dialog anchorWindow
 
-  x: root.x + root.width / 2 - width / 2
-  y: root.y - width / 2 //you can't even add 1 without everything breaking wtf
+    property int avatarWidth
 
-  mainItem:
-  Item {
-   onParentChanged: {
-     //This removes the dialog background
-      if (parent){
-        var popupWindow = Window.window
-        if (typeof popupWindow.backgroundHints !== "undefined"){
-          popupWindow.backgroundHints = PlasmaCore.Types.NoBackground
-        }
-      }
+    type: PlasmaCore.Dialog.Notification
+    backgroundHints: PlasmaCore.Dialog.NoBackground
+
+    x: avatarContainer.anchorWindow.x + avatarContainer.anchorWindow.width / 2 - avatarContainer.width / 2
+    y: avatarContainer.anchorWindow.y - avatarContainer.width / 2
+
+    mainItem: UserAvatar {
+        width: avatarContainer.avatarWidth
+        height: avatarContainer.avatarWidth
+
+        launcher: avatarContainer.launcher
     }
-  }
-  UserAvatar {
-    id: avatarFrame
-    anchors.centerIn: parent
-    width: avatarWidth
-    height: avatarWidth
-  }
 }

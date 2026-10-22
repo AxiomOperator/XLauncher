@@ -16,316 +16,333 @@
  *   Free Software Foundation, Inc.,                                         *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .          *
  ****************************************************************************/
-import QtQuick 2.15
-import QtQuick.Layouts 1.12
-import Qt5Compat.GraphicalEffects
-import org.kde.plasma.core as PlasmaCore
-import org.kde.plasma.components 3.0 as PlasmaComponents
-import org.kde.coreaddons 1.0 as KCoreAddons
 
-import org.kde.plasma.plasma5support 2.0 as P5Support
-import org.kde.kirigami as Kirigami
+pragma ComponentBehavior: Bound
+
+import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
+import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasmoid
 
 import "js/colorType.js" as ColorType
 
 Item {
-  id: main
-  property bool searching: (searchBar.textField.text != "")
- // signal  newTextQuery(string text)
+    id: main
 
-  readonly property color textColor: Kirigami.Theme.textColor
-  readonly property string textFont: plasmoid.configuration.useSystemFontSettings ? Kirigami.Theme.defaultFont : "SF Pro Text"
-  readonly property real textSize: plasmoid.configuration.useSystemFontSettings ? Kirigami.Theme.defaultFont.pointSize : 11
-  readonly property color bgColor: Kirigami.Theme.backgroundColor
-  readonly property color highlightColor: Kirigami.Theme.highlightColor
-  readonly property color highlightedTextColor: Kirigami.Theme.highlightedTextColor
-  readonly property bool isTop: plasmoid.location == PlasmaCore.Types.TopEdge & plasmoid.configuration.launcherPosition != 2 & !plasmoid.configuration.floating
+    required property LauncherState launcher
+    required property PlasmaCore.Dialog dialog
 
-  readonly property color glowColor1: plasmoid.configuration.glowColor == 0 ? "#D300DC" :
-                                      plasmoid.configuration.glowColor == 1 ? "#20bdff" :
-                                      "#ff005d"
-  readonly property color glowColor2: plasmoid.configuration.glowColor == 0 ? "#8700FF" :
-                                      plasmoid.configuration.glowColor == 1 ? "#5433ff" :
-                                      "#ff8b26"
+    property bool showAllApps: false
 
-  property bool showAllApps: false
+    readonly property bool searching: searchBar.textField.text !== ""
+    readonly property bool isTop: Plasmoid.location === PlasmaCore.Types.TopEdge
+                                  && Plasmoid.configuration.launcherPosition !== 2
+                                  && !Plasmoid.configuration.floating
+    readonly property bool isDarkTheme: ColorType.isDark(Kirigami.Theme.backgroundColor)
+    readonly property color contrastBgColor: main.isDarkTheme ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(1, 1, 1, 0.25)
+    readonly property bool glowVisible: Plasmoid.configuration.enableGlow && !main.searching
+    readonly property int pinnedModel: Plasmoid.configuration.pinnedModel
+    readonly property int itemSpacing: 8
 
-  property bool isDarkTheme: ColorType.isDark(bgColor)
-  property color contrastBgColor: isDarkTheme ? Qt.rgba(255, 255, 255, 0.15) : Qt.rgba(255, 255, 255, 0.25)
+    // Height needed for the header, the grid rows and the search bar
+    readonly property real contentHeight: headerLabelRow.height
+                                          + searchBar.height
+                                          + backdrop.y
+                                          + main.itemSpacing * 3
+                                          + main.launcher.cellSizeHeight * main.launcher.rows
 
-  property int pinnedModel: plasmoid.configuration.pinnedModel
+    readonly property LauncherPage currentPage: stack.currentItem as LauncherPage
 
-  property alias headerLabelRow: headerLabelRow
-  property alias searchBar: searchBar
-  property alias contentY: backdrop
-  property int itemSpacing: 8
-
-  KCoreAddons.KUser {
-      id: kuser
-  }
-
-  function reset(){
-    showAllApps = false;
-    searchBar.textField.clear();
-    searchBar.textField.forceActiveFocus();
-    stack.replace(pinnedAppsComponent)
-    headerLabelRow.reset();
-  }
-
-  onPinnedModelChanged: headerLabelRow.reset()
-
-  Rectangle {
-    id: backdrop
-    x: 0
-    y: isTop ? 125 : 90
-    width: main.width
-    height: isTop ? main.height - y - Kirigami.Units.largeSpacing : main.height - y //- (searchBarContainer.height + 20)
-    color: bgColor
-    opacity: 0
-  }
-  //Floating Avatar
-  Item {
-    id: avatarParent
-    x: main.width / 2
-    y: - root.margins.top
-    FloatingAvatar { //Anyone looking for an unpredictable number generator?
-      id: floatingAvatar
-      //visualParent: root
-      isTop: main.isTop
-      avatarWidth: 110
-      visible: root.visible && !isTop ? true : root.visible && plasmoid.configuration.floating ? true : false
-    }
-  }
-  //Power & Settings
-  RowLayout {
-    id: headerBar
-    width: main.width
-    Item {
-      Layout.fillWidth: true
-      UserAvatar {
-        width: 80
-        height: width
-        visible: !floatingAvatar.visible
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.horizontalCenterOffset: width / 2
-      }
+    function reset(): void {
+        main.showAllApps = false;
+        searchBar.textField.clear();
+        searchBar.textField.forceActiveFocus();
+        stack.replace(pinnedAppsComponent);
+        headerLabelRow.reset();
     }
 
-    Header {
-      id: powerSettings
-      iconSize: 20 
-      Layout.fillHeight: false
-      Layout.alignment: Qt.AlignRight | Qt.AlignTop
-    }
+    onPinnedModelChanged: headerLabelRow.reset()
 
-  }
-  
-  //Greeting
-  Greeting {
-    id: greeting
-    visible: true//floatingAvatar.visible
-    x: main.width / 2 - textWidth / 2 //This centeres the Text
-    y: main.isTop ? 95 : 50 
-    textSize: 20 
-  }
-
-  // Fvorites / All apps label
-  ColumnLayout {
-
-    anchors.top: backdrop.top
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
-
-    spacing: itemSpacing
-
-    RowLayout {
-      id: headerLabelRow
-      visible: !searching
-
-      function reset() {
-        if(showAllApps) {
-          var appList = stack.currentItem
-          var currentCategory = appList.getCurrentCategory();
-          mainLabelGrid.text = currentCategory.name;
-          sortingImage.source = currentCategory.icon;
-          appList.updateShowedModel(currentCategory.index);
-        } else {
-          mainLabelGrid.text =  pinnedModel == 0 ? i18n("Favorite Apps") : i18n("Recent Apps");
-        }
-      }
-        
-      Kirigami.Icon {
-        id: headerLabel
-        source:  Qt.resolvedUrl("icons/feather/star.svg")
-        visible: !main.showAllApps
-        Layout.preferredHeight: 15
-        Layout.preferredWidth: 15
-        Layout.fillHeight: false
-        isMask: true
-        color: main.textColor
-      }
-
-      Kirigami.Icon {
-        id: sortingImage
-        Layout.preferredHeight: 15
-        Layout.preferredWidth: 15
-        Layout.fillHeight: false
-        visible: main.showAllApps
-      }
-
-      PlasmaComponents.Label {
-        id: mainLabelGrid
-        font.family: textFont
-        font.pointSize: textSize
-        Layout.fillWidth: true
-        MouseArea {
-          anchors.fill: parent
-          cursorShape: Qt.PointingHandCursor
-          hoverEnabled: true
-          enabled: showAllApps && !searching
-          acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-          onClicked: {
-            var appList = stack.currentItem;
-            if (mouse.button == Qt.LeftButton) { appList.incrementCurrentStateIndex() }
-            else if (mouse.button == Qt.RightButton) { appList.decrementCurrentStateIndex() }
-            else if (mouse.button == Qt.MiddleButton) { appList.resetCurrentStateIndex() }
+    onSearchingChanged: {
+        if (main.searching) {
+            stack.replace(searchComponent);
+        } else if (main.showAllApps) {
+            stack.replace(allAppsComponent);
             headerLabelRow.reset();
-          }
+        } else {
+            stack.replace(pinnedAppsComponent);
+            headerLabelRow.reset();
         }
-      }
+    }
 
-      // Show all app buttons
-      PlasmaComponents.Button  {
-        id: allAppsButton
-        text: showAllApps ? i18n("Back") : i18n("All apps")
-        flat: false
-        
-        topPadding: 6
-        bottomPadding: topPadding
-        leftPadding: 10
-        rightPadding: 10
+    // Where the page area starts, below the avatar and greeting
+    Item {
+        id: backdrop
 
-      //  icon.name: showAllApps ? "go-previous" : "go-next"
-        icon.height: 15
-        icon.width: icon.height
+        y: main.isTop ? 125 : 90
+        width: main.width
+        height: main.isTop ? main.height - backdrop.y - Kirigami.Units.largeSpacing : main.height - backdrop.y
+    }
 
-        font.pointSize: textSize
-        font.family: textFont
-        
-        LayoutMirroring.enabled: true
-        LayoutMirroring.childrenInherit: !showAllApps 
-        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+    FloatingAvatar {
+        id: floatingAvatar
 
-        onClicked: {
-          showAllApps = !showAllApps;
-          stack.replace(showAllApps ? allAppsComponent : pinnedAppsComponent)
-          headerLabelRow.reset();
-          searchBar.textField.forceActiveFocus(Qt.BacktabFocusReason);
-        }
-        background: Rectangle {
-          id: btnBg
-          color: main.contrastBgColor
-          border.width: 1
-          border.color: main.contrastBgColor
-          radius: height / 2
+        launcher: main.launcher
+        anchorWindow: main.dialog
+        avatarWidth: 110
+        visible: main.dialog.visible && !main.isTop
+    }
 
-          Rectangle {
-            id: bgMask
-            width: parent.width
-            height: parent.height
-            radius: height / 2
-            border.width: 1
-            visible: plasmoid.configuration.enableGlow && !searching
-          }
-          Item {
-            visible: plasmoid.configuration.enableGlow && !searching
-            anchors.fill: bgMask
-            layer.enabled: true
-            layer.effect: OpacityMask { maskSource: bgMask }
+    // Avatar, settings and power
+    RowLayout {
+        id: headerBar
 
-            LinearGradient {
-              anchors.fill: parent
-              start: Qt.point(bgMask.width, 0)
-              end: Qt.point(0, bgMask.height)
-              gradient: Gradient {
-                  GradientStop { position: 0.0; color: glowColor1 }
-                  GradientStop { position: 1.0; color: glowColor2 }
-              }
+        width: main.width
+
+        Item {
+            Layout.fillWidth: true
+
+            UserAvatar {
+                width: 80
+                height: width
+                visible: !floatingAvatar.visible
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.horizontalCenterOffset: width / 2
+
+                launcher: main.launcher
             }
-          }
         }
 
-        //All apps button shadow
-        DropShadow {
-            anchors.fill: btnBg
-            cached: true
-            horizontalOffset: 0
-            verticalOffset: 0
-            radius: 11.0
-            samples: 16
-            color: glowColor1
-            source: btnBg
-            visible: plasmoid.configuration.enableGlow && !searching
+        Header {
+            id: powerSettings
+
+            launcher: main.launcher
+            iconSize: 20
+
+            Layout.fillHeight: false
+            Layout.alignment: Qt.AlignRight | Qt.AlignTop
         }
-      }
-
-      Component.onCompleted: headerLabelRow.reset()
     }
 
-    StackView {
-      id: stack
-      initialItem: pinnedAppsComponent
-      Layout.fillWidth: true
-      Layout.preferredHeight: root.cellSizeHeight*root.rows
-      Keys.priority: Keys.AfterItem
-      Keys.forwardTo: searchBar.textField
+    Greeting {
+        id: greeting
+
+        x: main.width / 2 - greeting.textWidth / 2 // Centers the text
+        y: main.isTop ? 95 : 50
+
+        launcher: main.launcher
+        textSize: 20
     }
 
-    Component {
-      id: pinnedAppsComponent
-      PinnedApps{
-        id: pinnedApps
-      }
-    }
+    ColumnLayout {
+        anchors {
+            top: backdrop.top
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
 
-    Component {
-      id: allAppsComponent
-      AllAppsList{
-        id: appList
-      }
-    }
+        spacing: main.itemSpacing
 
-    Component {
-      id:searchComponent
-      RunnerList {
-        id: runnerList
-        model: runnerModel.count ? runnerModel.modelForRow(0) : null
-      }
-    }
+        // Favorites / all apps label
+        RowLayout {
+            id: headerLabelRow
 
-    // Search Bar
+            visible: !main.searching
 
-    SearchBar {
-      id: searchBar
-      Layout.fillWidth: true
-      Layout.preferredHeight: 45
-      Layout.maximumHeight: Layout.preferredHeight
-      Layout.alignment: Qt.AlignBottom
-      Keys.priority: Keys.AfterItem
-      Keys.forwardTo: stack.currentItem.viewItem
+            function reset(): void {
+                if (main.showAllApps) {
+                    const appList = stack.currentItem as AllAppsList;
+                    const currentCategory = appList ? appList.getCurrentCategory() : undefined;
+                    if (!currentCategory) {
+                        return;
+                    }
+                    mainLabelGrid.text = currentCategory.name;
+                    sortingImage.source = currentCategory.icon;
+                    appList.updateShowedModel(currentCategory.index);
+                } else {
+                    mainLabelGrid.text = main.pinnedModel === 0 ? i18n("Favorite Apps") : i18n("Recent Apps");
+                }
+            }
+
+            Component.onCompleted: headerLabelRow.reset()
+
+            Kirigami.Icon {
+                id: headerLabel
+
+                source: Qt.resolvedUrl("icons/feather/star.svg")
+                visible: !main.showAllApps
+                isMask: true
+                color: Kirigami.Theme.textColor
+
+                Layout.preferredHeight: 15
+                Layout.preferredWidth: 15
+                Layout.fillHeight: false
+            }
+
+            Kirigami.Icon {
+                id: sortingImage
+
+                visible: main.showAllApps
+
+                Layout.preferredHeight: 15
+                Layout.preferredWidth: 15
+                Layout.fillHeight: false
+            }
+
+            PlasmaComponents.Label {
+                id: mainLabelGrid
+
+                font.family: main.launcher.textFont
+                font.pointSize: main.launcher.textSize
+
+                Layout.fillWidth: true
+
+                // Cycles through the app categories
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    enabled: main.showAllApps && !main.searching
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+
+                    onClicked: mouse => {
+                        const appList = stack.currentItem as AllAppsList;
+                        if (!appList) {
+                            return;
+                        }
+                        if (mouse.button === Qt.LeftButton) {
+                            appList.incrementCurrentStateIndex();
+                        } else if (mouse.button === Qt.RightButton) {
+                            appList.decrementCurrentStateIndex();
+                        } else if (mouse.button === Qt.MiddleButton) {
+                            appList.resetCurrentStateIndex();
+                        }
+                        headerLabelRow.reset();
+                    }
+                }
+            }
+
+            PlasmaComponents.Button {
+                id: allAppsButton
+
+                text: main.showAllApps ? i18n("Back") : i18n("All apps")
+                flat: false
+
+                topPadding: 6
+                bottomPadding: allAppsButton.topPadding
+                leftPadding: 10
+                rightPadding: 10
+
+                icon.height: 15
+                icon.width: 15
+
+                font.pointSize: main.launcher.textSize
+                font.family: main.launcher.textFont
+
+                LayoutMirroring.enabled: true
+                LayoutMirroring.childrenInherit: !main.showAllApps
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                onClicked: {
+                    main.showAllApps = !main.showAllApps;
+                    stack.replace(main.showAllApps ? allAppsComponent : pinnedAppsComponent);
+                    headerLabelRow.reset();
+                    searchBar.textField.forceActiveFocus(Qt.BacktabFocusReason);
+                }
+
+                background: Item {
+                    Rectangle {
+                        id: buttonBackground
+
+                        anchors.fill: parent
+                        color: main.contrastBgColor
+                        border.width: 1
+                        border.color: main.contrastBgColor
+                        radius: buttonBackground.height / 2
+
+                        // Glow fill; the rounded Rectangle clips its own gradient
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: buttonBackground.radius
+                            visible: main.glowVisible
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0.0; color: main.launcher.glowColor2 }
+                                GradientStop { position: 1.0; color: main.launcher.glowColor1 }
+                            }
+                        }
+                    }
+
+                    MultiEffect {
+                        anchors.fill: buttonBackground
+                        source: buttonBackground
+                        visible: main.glowVisible
+                        shadowEnabled: true
+                        shadowColor: main.launcher.glowColor1
+                        shadowBlur: 0.7
+                        blurMax: 16
+                    }
+                }
+            }
+        }
+
+        StackView {
+            id: stack
+
+            initialItem: pinnedAppsComponent
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: main.launcher.cellSizeHeight * main.launcher.rows
+
+            Keys.priority: Keys.AfterItem
+            Keys.forwardTo: [searchBar.textField]
+        }
+
+        Component {
+            id: pinnedAppsComponent
+
+            PinnedApps {
+                launcher: main.launcher
+                searchField: searchBar.textField
+            }
+        }
+
+        Component {
+            id: allAppsComponent
+
+            AllAppsList {
+                launcher: main.launcher
+            }
+        }
+
+        Component {
+            id: searchComponent
+
+            RunnerList {
+                launcher: main.launcher
+                model: main.launcher.runnerModel.count ? main.launcher.runnerModel.modelForRow(0) : null
+            }
+        }
+
+        SearchBar {
+            id: searchBar
+
+            launcher: main.launcher
+            searching: main.searching
+            color: main.contrastBgColor
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: 45
+            Layout.maximumHeight: searchBar.Layout.preferredHeight
+            Layout.alignment: Qt.AlignBottom
+
+            Keys.priority: Keys.AfterItem
+            Keys.forwardTo: main.currentPage && main.currentPage.viewItem ? [main.currentPage.viewItem] : []
+        }
     }
-  }
-  onSearchingChanged: {
-    if(searching){
-      stack.replace(searchComponent)
-    } else if(showAllApps) {
-      stack.replace(allAppsComponent);
-       headerLabelRow.reset();
-    } else { 
-      stack.replace(pinnedAppsComponent);
-       headerLabelRow.reset();
-    }
-  }
 }

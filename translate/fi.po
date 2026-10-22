@@ -1,12 +1,12 @@
-# Translation of AndromedaLauncher in Finnish
+# Translation of XLauncher in Finnish
 # Copyright (C) 2025
-# This file is distributed under the same license as the AndromedaLauncher package.
+# This file is distributed under the same license as the XLauncher package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: AndromedaLauncher\n"
-"Report-Msgid-Bugs-To: https://github.com/EliverLara/AndromedaLauncher\n"
+"Project-Id-Version: XLauncher\n"
+"Report-Msgid-Bugs-To: https://github.com/AxiomOperator/XLauncher\n"
 "POT-Creation-Date: 2026-01-04 16:56-0600\n"
 "PO-Revision-Date: 2025-12-14 15:55+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -17,8 +17,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../metadata.json
-msgid "Andromeda Launcher"
-msgstr "Andromeda-käynnistin"
+msgid "XLauncher"
+msgstr ""
 
 #: ../metadata.json
 msgid "A modern Launcher for plasma!"
@@ -163,7 +163,7 @@ msgid "All Applications (Default)"
 msgstr "Kaikki sovellukset (oletus)"
 
 #: ../contents/ui/config/ConfigGeneral.qml
-msgid "Developement"
+msgid "Development"
 msgstr "Kehitys"
 
 #: ../contents/ui/config/ConfigGeneral.qml

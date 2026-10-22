@@ -1,13 +1,13 @@
-# Translation of AndromedaLauncher in cs
+# Translation of XLauncher in cs
 # Copyright (C) 2026
-# This file is distributed under the same license as the AndromedaLauncher package.
+# This file is distributed under the same license as the XLauncher package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: AndromedaLauncher\n"
-"Report-Msgid-Bugs-To: https://github.com/EliverLara/AndromedaLauncher\n"
+"Project-Id-Version: XLauncher\n"
+"Report-Msgid-Bugs-To: https://github.com/AxiomOperator/XLauncher\n"
 "POT-Creation-Date: 2026-01-04 16:56-0600\n"
 "PO-Revision-Date: 2026-02-18 13:34+0100\n"
 "Last-Translator: lorduskordus <lorduskordus@gmail.com>\n"
@@ -19,8 +19,8 @@ msgstr ""
 "X-Generator: Poedit 3.8\n"
 
 #: ../metadata.json
-msgid "Andromeda Launcher"
-msgstr "Spouštěč Andromeda"
+msgid "XLauncher"
+msgstr ""
 
 #: ../metadata.json
 msgid "A modern Launcher for plasma!"
@@ -165,7 +165,7 @@ msgid "All Applications (Default)"
 msgstr "Všechny aplikace (výchozí)"
 
 #: ../contents/ui/config/ConfigGeneral.qml
-msgid "Developement"
+msgid "Development"
 msgstr "Vývoj"
 
 #: ../contents/ui/config/ConfigGeneral.qml

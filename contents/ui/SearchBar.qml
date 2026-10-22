@@ -1,53 +1,60 @@
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
-import org.kde.plasma.plasmoid 2.0
-
 Rectangle {
+    id: searchBar
 
-    radius: 10
-    color: main.contrastBgColor
+    required property LauncherState launcher
+    required property bool searching
 
     property alias textField: textField
+
+    radius: 10
 
     RowLayout {
         anchors.fill: parent
         spacing: 0
+
         Kirigami.Icon {
             id: searchIcon
+
+            source: Qt.resolvedUrl("icons/feather/search.svg")
+            isMask: true
+            color: Kirigami.Theme.textColor
+
             Layout.preferredWidth: 21
             Layout.preferredHeight: 21
             Layout.margins: 10
-            source: Qt.resolvedUrl('icons/feather/search.svg')
-            isMask: true
-            color: main.textColor
         }
 
         TextField {
             id: textField
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            font.pointSize: 12
 
+            font.pointSize: 12
             placeholderText: i18n("Search...")
-            background: Rectangle{
+            focus: true
+
+            background: Rectangle {
                 color: "transparent"
             }
-            focus: true
+
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+
             onTextChanged: {
-                textField.forceActiveFocus(Qt.ShortcutFocusReason)
-                runnerModel.query = text;   
+                textField.forceActiveFocus(Qt.ShortcutFocusReason);
+                searchBar.launcher.runnerModel.query = textField.text;
             }
 
             Keys.onPressed: event => {
-                if (event.key == Qt.Key_Escape) {
+                if (event.key === Qt.Key_Escape) {
                     event.accepted = true;
-                    if (searching) {
-                        clear();
+                    if (searchBar.searching) {
+                        textField.clear();
                     } else {
-                        root.toggle()
+                        searchBar.launcher.close();
                     }
                 }
             }

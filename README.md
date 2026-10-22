@@ -1,27 +1,28 @@
 <div align="center">
 
-# Andromeda Launcher
+# XLauncher
 
-A simple Launcher for KDE Plasma based on the awesome [mmcklauncher](https://github.com/SnoutBug/mmcklauncher)
+A simple Launcher for KDE Plasma 6, forked from [Andromeda Launcher](https://github.com/EliverLara/AndromedaLauncher) by EliverLara, which is based on the awesome [mmcklauncher](https://github.com/SnoutBug/mmcklauncher)
 
-![Andromeda Launcher](images/preview.png)
-![Andromeda Launcher](images/preview2.png)
+![XLauncher](images/preview.png)
+![XLauncher](images/preview2.png)
 
 </div>
 
-## Easy Installation
-#### KDE Store (Preferred way)
-1. Right click on the desktop
-2. Click on "Add Widgets"
-3. Click on "Get New Widgets"
-4. Click on "Download New Plasma Widgets"
-5. Search for "Andromeda Launcher"
-6. Click on "Install" and you're done!
+## Installation
+```sh
+git clone https://github.com/AxiomOperator/XLauncher.git
+kpackagetool6 --type Plasma/Applet --install XLauncher
+```
+
+To update an existing install, run `git pull` and then `kpackagetool6 --type Plasma/Applet --upgrade XLauncher`.
+
+XLauncher uses its own widget id, so it can be installed alongside Andromeda Launcher.
 
 ## Usage
 1. Right click on the desktop.
 2. Click "Add New Widgets"
-3. Search for "Andromeda Launcher"
+3. Search for "XLauncher"
 4. Drag and drop to your desired place.
 
 
@@ -29,8 +30,8 @@ A simple Launcher for KDE Plasma based on the awesome [mmcklauncher](https://git
 
 If you would like to contribute by adding translations for your language, please follow the instructions in the [Translations Readme](translate/ReadMe.md).
 
-## Support Me ♥
-If you enjoy what I do, consider supporting me, every little bit means the world! 
+## Support the original author ♥
+XLauncher builds on EliverLara's work on Andromeda Launcher. If you enjoy it, consider supporting them:
 <br>
 
 <a href="https://ko-fi.com/eliverlara"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-%234D798C?style=for-the-badge&logo=ko-fi"/></a>

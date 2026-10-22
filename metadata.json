@@ -5,6 +5,9 @@
 			{
 				"Email": "eliverlara@gmail.com",
 				"Name": "EliverLara"
+			},
+			{
+				"Name": "AxiomOperator"
 			}
 		],
 		"Category": "Application Launchers",
@@ -16,14 +19,10 @@
 		"Description[pl]": "Nowoczesne menu programów dla Plasmy!",
 		"EnabledByDefault": true,
 		"Icon": "start-here-kde",
-		"Id": "AndromedaLauncher",
-		"Name": "Andromeda Launcher",
-		"Name[cs]": "Spouštěč Andromeda",
-		"Name[el]": "Andromeda Launcher",
-		"Name[fi]": "Andromeda-käynnistin",
-		"Name[pl]": "Andromeda Launcher",
+		"Id": "XLauncher",
+		"Name": "XLauncher",
 		"Version": "0.6",
-		"Website": "https://github.com/EliverLara/AndromedaLauncher"
+		"Website": "https://github.com/AxiomOperator/XLauncher"
 	},
 	"X-Plasma-API-Minimum-Version": "6.0",
 	"X-Plasma-Provides": [

@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: mmcklauncher\n"
-"Report-Msgid-Bugs-To: https://github.com/EliverLara/AndromedaLauncher\n"
+"Report-Msgid-Bugs-To: https://github.com/AxiomOperator/XLauncher\n"
 "POT-Creation-Date: 2026-01-04 16:56-0600\n"
 "PO-Revision-Date: 2022-03-07 20:42+0000\n"
 "Last-Translator: Friedrich Schriewer <friedrich.schriewer@gmx.net>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../metadata.json
-msgid "Andromeda Launcher"
+msgid "XLauncher"
 msgstr ""
 
 #: ../metadata.json
@@ -164,7 +164,7 @@ msgid "All Applications (Default)"
 msgstr "Alle Anwendungen (Standard)"
 
 #: ../contents/ui/config/ConfigGeneral.qml
-msgid "Developement"
+msgid "Development"
 msgstr "Entwicklung"
 
 #: ../contents/ui/config/ConfigGeneral.qml

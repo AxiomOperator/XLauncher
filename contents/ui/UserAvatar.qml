@@ -1,54 +1,70 @@
-import QtQuick 2.12
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.kirigami as Kirigami
-import org.kde.kirigamiaddons.components 1.0 as KirigamiComponents
+import QtQuick
 import org.kde.kcmutils as KCM
+import org.kde.kirigami as Kirigami
+import org.kde.kirigamiaddons.components as KirigamiComponents
+import org.kde.plasma.plasmoid
 
 Item {
+    id: avatar
 
-    readonly property color borderGradientColor1: plasmoid.configuration.glowColor == 0 ? "#FEAC5E" :
-                                                plasmoid.configuration.glowColor == 1 ? "#a5fecb" :
-                                                "#ff005d"
-    readonly property color borderGradientColor2: plasmoid.configuration.glowColor == 0 ? "#C779D0" :
-                                                plasmoid.configuration.glowColor == 1 ? "#20bdff" :
-                                                "#ff005c"
-    readonly property color borderGradientColor3: plasmoid.configuration.glowColor == 0 ? "#4BC0C8" :
-                                                plasmoid.configuration.glowColor == 1 ? "#5433ff" :
-                                                "#ff8b26"
+    required property LauncherState launcher
+
+    readonly property color borderGradientColor1: {
+        switch (Plasmoid.configuration.glowColor) {
+        case 0: return "#FEAC5E";
+        case 1: return "#a5fecb";
+        default: return "#ff005d";
+        }
+    }
+    readonly property color borderGradientColor2: {
+        switch (Plasmoid.configuration.glowColor) {
+        case 0: return "#C779D0";
+        case 1: return "#20bdff";
+        default: return "#ff005c";
+        }
+    }
+    readonly property color borderGradientColor3: {
+        switch (Plasmoid.configuration.glowColor) {
+        case 0: return "#4BC0C8";
+        case 1: return "#5433ff";
+        default: return "#ff8b26";
+        }
+    }
 
     KirigamiComponents.AvatarButton {
         id: mainFaceIcon
-        source: kuser.faceIconUrl
+
         anchors {
             fill: parent
             margins: Kirigami.Units.smallSpacing
         }
-        MouseArea {
-            anchors.fill: parent
+        source: avatar.launcher.user.faceIconUrl
+
+        onClicked: {
+            KCM.KCMLauncher.openSystemSettings("kcm_users");
+            avatar.launcher.close();
+        }
+
+        HoverHandler {
             cursorShape: Qt.PointingHandCursor
-            hoverEnabled: false
-            onClicked: {
-            KCM.KCMLauncher.openSystemSettings("kcm_users")
-            root.toggle()
-            }
         }
     }
 
+    // Gradient ring behind the avatar
     Rectangle {
-        visible: plasmoid.configuration.enableGlow
         anchors.centerIn: mainFaceIcon
-        width: parent.width - 4 // Subtract to prevent fringing
+        width: avatar.width - 4 // Smaller than the avatar to prevent fringing
         height: width
         radius: width / 2
-        
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: borderGradientColor1 }
-            GradientStop { position: 0.33; color: borderGradientColor2 }
-            GradientStop { position: 1.0; color: borderGradientColor3 }
-        }
-
-        z:-1
+        visible: Plasmoid.configuration.enableGlow
+        z: -1
         rotation: 270
         transformOrigin: Item.Center
+
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: avatar.borderGradientColor1 }
+            GradientStop { position: 0.33; color: avatar.borderGradientColor2 }
+            GradientStop { position: 1.0; color: avatar.borderGradientColor3 }
+        }
     }
 }
